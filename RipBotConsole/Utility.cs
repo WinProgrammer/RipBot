@@ -28,6 +28,12 @@ namespace RipBot
 
 
 
+		/// <summary>
+		/// Gets the ID of a channel from it's name.
+		/// </summary>
+		/// <param name="guild"></param>
+		/// <param name="channelname">The name of the channel to look up.</param>
+		/// <returns></returns>
 		public static ulong GetChannelID(Discord.WebSocket.SocketGuild guild, string channelname)
 		{
 			ulong ret = 0;
@@ -41,10 +47,17 @@ namespace RipBot
 					break;
 				}
 			}
-			
+
 			return ret;
 		}
 
+
+		/// <summary>
+		/// Gets the name of a channel by it's ID.
+		/// </summary>
+		/// <param name="guild"></param>
+		/// <param name="channelid">The ID of the channel to look up.</param>
+		/// <returns></returns>
 		public static string GetChannelName(Discord.WebSocket.SocketGuild guild, ulong channelid)
 		{
 			string ret = "";
@@ -59,18 +72,24 @@ namespace RipBot
 		}
 
 
+
+		/// <summary>
+		/// Gets a list of the Guilds channels and stores them in a Static Hashtable.
+		/// </summary>
+		/// <param name="guild"></param>
+		/// <returns>True if successful, otherwise False.</returns>
 		public static bool CacheOurChannels(Discord.WebSocket.SocketGuild guild)
 		{
-			Globals.OURCHANNELSIDKEY = new System.Collections.Hashtable();
-			Globals.OURCHANNELSNAMEKEY = new System.Collections.Hashtable();
+			Globals.GUILDCHANNELSBYID = new System.Collections.Hashtable();
+			Globals.GUILDCHANNELSBYNAME = new System.Collections.Hashtable();
 
 			try
 			{
 				foreach (Discord.WebSocket.SocketGuildChannel sgc in guild.Channels)
 				{
 					//sb.AppendLine(string.Format("Guild: {0}\tChannel ID: {1}\tChannel name: {2}", sgc.Guild.Name, sgc.Id.ToString(), sgc.Name));
-					Globals.OURCHANNELSIDKEY.Add(sgc.Id, sgc.Name);
-					Globals.OURCHANNELSNAMEKEY.Add(sgc.Name, sgc.Id);
+					Globals.GUILDCHANNELSBYID.Add(sgc.Id, sgc.Name);
+					Globals.GUILDCHANNELSBYNAME.Add(sgc.Name, sgc.Id);
 				}
 			}
 			catch (Exception ex)
@@ -150,6 +169,11 @@ namespace RipBot
 
 
 
+		/// <summary>
+		/// Encloses a string in quotes.
+		/// </summary>
+		/// <param name="texttoenclose">The text to quote enclose.</param>
+		/// <returns>A quoted string.</returns>
 		public static string EncloseInQuotes(string texttoenclose)
 		{
 			string quote = "\"";

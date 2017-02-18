@@ -16,7 +16,11 @@ using System.Threading;
 
 namespace RipBot.Modules
 {
+	/// <summary>
+	/// Handles all the database caching.
+	/// </summary>
 	[Name("WoWCache")]
+	[RequireContext(ContextType.Guild)]
 
 	public class WoWCacheModule : ModuleBase<SocketCommandContext>
 	{
@@ -30,11 +34,17 @@ namespace RipBot.Modules
 		//}
 
 
+		/// <summary>
+		/// Updates the GUILD table.
+		/// </summary>
+		/// <param name="level">The level of the players to update. We do it this way instead of all at once to avoid being Rate Limited.</param>
+		/// <param name="optionalguildname"></param>
+		/// <returns></returns>
 		[Command("updateguildcache"), Alias("ugc")]
 		[Remarks("Updates the GUILD table.\n")]
 		[Summary("EX: ripbot updateguildcache 110\nEX: ripbot updateguildcache 110 Hordecorp")]
 		[MinPermissions(AccessLevel.ServerAdmin)]
-		public async Task UpdateGuildCache(string level, [Remainder]string optionalguildname = null)
+		public async Task UpdateGuildCacheCmd(string level, [Remainder]string optionalguildname = null)
 		{
 			string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
 
@@ -47,16 +57,16 @@ namespace RipBot.Modules
 
 			DataAccess da = new DataAccess();
 
-			//// check if guild exists
+			// check if guild exists
 			bool ret = false;
-			//ret = da.DoesGuildExist(guildname);
+			ret = da.DoesGuildExist(guildname);
 
-			//// if it doesn't, get it
-			//if (!ret)
-			//{
-			Guild theguild = null;
+			// if it doesn't, get it
+			if (!ret)
+			{
+				Guild theguild = null;
 
-			try
+				try
 				{
 					theguild = explorer.GetGuild(Globals.DEFAULTREALM, guildname, GuildOptions.GetEverything);
 
@@ -72,14 +82,14 @@ namespace RipBot.Modules
 				}
 
 				theguild = null;
-			//}
+			}
 
 
 			int numofplayers =0;
 			int numofupdatedplayers = 0;
 
 
-			// Get the list of playernames in a guild who have a matching ilvl
+			// Get the list of playernames in a guild who have a matching lvl
 			DataTable matchingplayers = da.GetTable("SELECT PlayerName FROM PLAYERS WHERE Level = " + level + " AND GuildName = '" + guildname + "'", "Matches");
 			if (matchingplayers != null & matchingplayers.Rows.Count > 0)
 			{
@@ -148,6 +158,7 @@ namespace RipBot.Modules
 
 
 			matchingplayers = null;
+			da.Dispose();
 			da = null;
 			player = null;
 
@@ -156,6 +167,10 @@ namespace RipBot.Modules
 		}
 
 
+		/// <summary>
+		/// Does the actual updating of the guild and players.
+		/// </summary>
+		/// <param name="theguild">The Guild to update.</param>
 		private void UpdateGuildInfo(Guild theguild)
 		{
 			int ret = -1;
@@ -192,11 +207,17 @@ namespace RipBot.Modules
 
 			//txtResults.Text += "Finished updating guild info.\r\n";
 
+			da.Dispose();
 			da = null;
 		}
 
 
 
+		/// <summary>
+		/// Purges a guilds players from the cache who are no longer are in the guild. (PLAYERS table)
+		/// </summary>
+		/// <param name="optionalguildname">The guild name to purge.</param>
+		/// <returns></returns>
 		[Command("purgeplayers"), Alias("pp")]
 		[Remarks("Purges a guilds players from the cache who are no longer are in the guild. (PLAYERS table)\n")]
 		[Summary("EX: ripbot purgeplayers\nEX: ripbot purgeplayers Hordecorp")]
@@ -225,9 +246,11 @@ namespace RipBot.Modules
 				Console.WriteLine(ex.Message);
 				if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 				{
-					await ReplyAsync("Blizzard API service is down.\n");
+					//await ReplyAsync("Blizzard API service is down.\n");
+					//await ReplyAsync(ex.Message + "\n");
 				}
-				await ReplyAsync(guildname + " guild not found.");
+				await ReplyAsync(ex.Message + "\n");
+				await ReplyAsync(guildname + " guild not found.\n");
 				return;
 			}
 
@@ -275,13 +298,14 @@ namespace RipBot.Modules
 
 
 			// remove the players from the cache who are in the removal list
-			bool playersdeletedfromguild = da.PurgePlayers(playerstoremove);
+			int playersdeletedfromguild = da.PurgePlayers(playerstoremove);
 			da.Dispose();
 			da = null;
 
 
 
-			await ReplyAsync("Players purged from " + guildname + "  (" + DateTime.Now.ToString() + ").\n");
+			await ReplyAsync(playersdeletedfromguild + " players purged from " + guildname + " out of " + playerstoremove.Count.ToString() + " to be purged  (" + DateTime.Now.ToString() + ").\n");
+			//await ReplyAsync(guildname + " had " + players.Count.ToString() + " members and now has " + DateTime.Now.ToString() + " members.\n");
 		}
 
 	}

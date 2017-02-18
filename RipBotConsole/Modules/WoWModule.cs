@@ -16,41 +16,49 @@ using Discord;
 
 namespace RipBot.Modules
 {
+	/// <summary>
+	/// Handles all the WoW related commands.
+	/// </summary>
 	[Name("WoW")]
 	[RequireContext(ContextType.Guild)]
 	public class WoWModule : ModuleBase<SocketCommandContext>
 	{
-		[Command("adminsay"), Alias("as")]
-		[Remarks("Make the bot echo something by a server admin.\n")]
-		[Summary("EX: ripbot adminsay Hello\n")]
-		[MinPermissions(AccessLevel.ServerAdmin)]
-		public async Task AdminSay([Remainder]string text)
-		{
-			await ReplyAsync(text);
-		}
+		//[Command("adminsay"), Alias("as")]
+		//[Remarks("Make the bot echo something by a server admin.\n")]
+		//[Summary("EX: ripbot adminsay Hello\n")]
+		//[MinPermissions(AccessLevel.ServerAdmin)]
+		//public async Task AdminSayCmd([Remainder]string text)
+		//{
+		//	await ReplyAsync(text);
+		//}
 
-		[Command("modsay"), Alias("ms")]
-		[Remarks("Make the bot echo something by a server mod.\n")]
-		[Summary("EX: ripbot modsay Hello\n")]
-		[MinPermissions(AccessLevel.ServerMod)]
-		public async Task ModSay([Remainder]string text)
-		{
-			await ReplyAsync(text);
-		}
-
-
+		//[Command("modsay"), Alias("ms")]
+		//[Remarks("Make the bot echo something by a server mod.\n")]
+		//[Summary("EX: ripbot modsay Hello\n")]
+		//[MinPermissions(AccessLevel.ServerMod)]
+		//public async Task ModSayCmd([Remainder]string text)
+		//{
+		//	await ReplyAsync(text);
+		//}
 
 
 
+
+
+		/// <summary>
+		/// Display all Hordecorp High Council members.\nThis command ONLY works for Hordecorp.
+		/// </summary>
+		/// <returns></returns>
 		[Command("whoishighcouncil"), Alias("wihc")]
 		[Remarks("Display all Hordecorp High Council members.\nThis command ONLY works for Hordecorp.\n")]
 		[Summary("EX: ripbot whoishighcouncil\n")]
 		[MinPermissions(AccessLevel.User)]
-		public async Task WhoIsHighCouncil()
+		public async Task WhoIsHighCouncilCmd()
 		{
 			StringBuilder sb = new StringBuilder();
 			DataAccess da = new DataAccess();
 			List<string> hc = da.GetHighCouncilMembers();
+			da.Dispose();
 			da = null;
 
 			hc.Sort();
@@ -67,12 +75,17 @@ namespace RipBot.Modules
 
 
 
-
+		/// <summary>
+		/// Gets the gear for a player. (Updates the guild cache and the player)
+		/// </summary>
+		/// <param name="playername">The player to get the gear for.</param>
+		/// <param name="optionalguildname">The optional guild name.</param>
+		/// <returns></returns>
 		[Command("getgear"), Alias("gg")]
 		[Remarks("Gets the gear for a player.\n")]
 		[Summary("EX: ripbot getgear Ripgut\nEX: ripbot getgear Ripgut Hordecorp\n")]
 		[MinPermissions(AccessLevel.User)]
-		public async Task GetGear(string playername, [Remainder] string optionalguildname = null)
+		public async Task GetGearCmd(string playername, [Remainder] string optionalguildname = null)
 		{
 			string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
 
@@ -86,11 +99,12 @@ namespace RipBot.Modules
 			{
 				player = explorer.GetCharacter(Globals.DEFAULTREALM, playername, CharacterOptions.GetEverything);
 			}
-			catch(Exception ex)
+			catch (Exception ex)
 			{
 				if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 				{
-					sb.AppendLine("Blizzard API service is down.");
+					//sb.AppendLine("Blizzard API service is down.");
+					sb.AppendLine(ex.Message + "\n");
 				}
 				if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud
 				{
@@ -116,13 +130,14 @@ namespace RipBot.Modules
 
 					UpdateGuildInfo(theguild);
 				}
-				catch(Exception eex)
+				catch (Exception eex)
 				{
 					sb.AppendLine(eex.Message);
 
 					if (eex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 					{
-						sb.AppendLine("Blizzard API service is down.");
+						//sb.AppendLine("Blizzard API service is down.");
+						sb.AppendLine(eex.Message + "\n");
 					}
 					//txtResults.Text = "Guild" + txtGuild.Text + " not found";
 					await ReplyAsync(sb.ToString());
@@ -244,7 +259,7 @@ namespace RipBot.Modules
 		/// <summary>
 		/// Updates the guild cache and guildmembers (PLAYERS table) only if the lastmodified dates are different.
 		/// </summary>
-		/// <param name="theguild"></param>
+		/// <param name="theguild">The guild to update.</param>
 		public static void UpdateGuildInfo(Guild theguild)
 		{
 			int ret = -1;
@@ -281,6 +296,7 @@ namespace RipBot.Modules
 
 			//txtResults.Text += "Finished updating guild info.\r\n";
 
+			da.Dispose();
 			da = null;
 		}
 
@@ -382,12 +398,16 @@ namespace RipBot.Modules
 
 
 
-
+		/// <summary>
+		/// Compare the gear of multiple players from any guild. (Updates the players also)
+		/// </summary>
+		/// <param name="playernames">A space seperated list of players to compare.</param>
+		/// <returns></returns>
 		[Command("comparegear")]
 		[Remarks("Compare the gear of multiple players from any guild.\n")]
 		[Summary("EX: ripbot comparegear Ripgut Weedinator Sunscreen\n")]
 		[MinPermissions(AccessLevel.User)]
-		public async Task CompareGear(params string[] playernames)
+		public async Task CompareGearCmd(params string[] playernames)
 		{
 			StringBuilder sb = new StringBuilder();
 			string currentline = "";
@@ -416,7 +436,8 @@ namespace RipBot.Modules
 
 					if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 					{
-						sb.AppendLine("Blizzard API service is down.");
+						//sb.AppendLine("Blizzard API service is down.");
+						sb.AppendLine(ex.Message + "\n");
 					}
 
 					if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud
@@ -447,7 +468,8 @@ namespace RipBot.Modules
 						Console.WriteLine(ex.ToString());
 						if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 						{
-							sb.AppendLine("Blizzard API service is down.");
+							//sb.AppendLine("Blizzard API service is down.");
+							sb.AppendLine(ex.Message + "\n");
 						}
 
 						if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud
@@ -560,15 +582,22 @@ namespace RipBot.Modules
 
 
 
-
+		/// <summary>
+		/// 
+		/// </summary>
 		[Group("get"), Name("WoW")]
 		public class Get : ModuleBase<SocketCommandContext>
 		{
+			/// <summary>
+			/// Gets basic information about a guild. (Updates guild cache also)
+			/// </summary>
+			/// <param name="optionalguildname">The optional guild name to get the info on.</param>
+			/// <returns></returns>
 			[Command("guildinfo"), Alias("ggi")]
 			[Remarks("Gets basic information about a guild.\n")]
 			[Summary("EX: ripbot get guildinfo\nEX: ripbot get guildinfo Hordecorp\n")]
 			[MinPermissions(AccessLevel.User)]
-			public async Task GuildInfo([Remainder]string optionalguildname = null)
+			public async Task GuildInfoCmd([Remainder]string optionalguildname = null)
 			{
 				string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
 				//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
@@ -583,12 +612,13 @@ namespace RipBot.Modules
 				{
 					theguild = explorer.GetGuild(Globals.DEFAULTREALM, guildname, GuildOptions.GetEverything);
 				}
-				catch(Exception ex)
+				catch (Exception ex)
 				{
 					Console.WriteLine(ex.Message);
 					if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 					{
-						await ReplyAsync("Blizzard API service is down.\n");
+						//await ReplyAsync("Blizzard API service is down.\n");
+						await ReplyAsync(ex.Message + "\n");
 					}
 					await ReplyAsync(guildname + " guild not found.");
 					return;
@@ -610,6 +640,7 @@ namespace RipBot.Modules
 				//int updates = 0;
 				//da.UpdateGuildMembers(theguild, out inserts, out updates);
 				UpdateGuildInfo(theguild);
+				//da.Dispose();
 				//da = null;
 
 				theguild = null;
@@ -623,12 +654,16 @@ namespace RipBot.Modules
 
 
 
-
+			/// <summary>
+			/// Get all the wow stats for specified user. (Updates guild cache and always refreshes the player in the database.)
+			/// </summary>
+			/// <param name="playername">The name of the player to get the stats for.</param>
+			/// <returns></returns>
 			[Command("allstats"), Alias("gas")]
 			[Remarks("Get all the wow stats for specified user.\n(Always refreshes the player in the database.)\n")]
 			[Summary("EX: ripbot get allstats Ripgut\n")]
 			[MinPermissions(AccessLevel.User)]
-			public async Task AllStats(string playername)
+			public async Task AllStatsCmd(string playername)
 			{
 				//string realm = optionalrealmname != null ? optionalrealmname : Utility.DEFAULTREALM;
 
@@ -641,13 +676,14 @@ namespace RipBot.Modules
 					//player = explorer.GetCharacter(realm, playername, CharacterOptions.GetStats | CharacterOptions.GetAchievements);
 					player = explorer.GetCharacter(Globals.DEFAULTREALM, playername, CharacterOptions.GetEverything);
 				}
-				catch(Exception ex)
+				catch (Exception ex)
 				{
 					sb.AppendLine(ex.Message);
 
 					if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 					{
-						sb.AppendLine("Blizzard API service is down.");
+						//sb.AppendLine("Blizzard API service is down.");
+						sb.AppendLine(ex.Message + "\n");
 					}
 
 					if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud
@@ -681,13 +717,14 @@ namespace RipBot.Modules
 
 						UpdateGuildInfo(theguild);
 					}
-					catch(Exception ex)
+					catch (Exception ex)
 					{
 						sb.AppendLine(ex.Message);
 
 						if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 						{
-							sb.AppendLine("Blizzard API service is down.");
+							//sb.AppendLine("Blizzard API service is down.");
+							sb.AppendLine(ex.Message + "\n");
 						}
 
 						//txtResults.Text = "Guild" + txtGuild.Text + " not found";
@@ -700,6 +737,7 @@ namespace RipBot.Modules
 				// upsert the player
 				ret = da.UpdatePlayer(player);
 				DateTime cachedate = da.GetPlayerCachedDateUnixReadableDate(player.Name);
+				da.Dispose();
 				da = null;
 
 
@@ -732,12 +770,16 @@ namespace RipBot.Modules
 
 
 
-
+			/// <summary>
+			/// Gets the total number of level 110's for a guild from the cache.
+			/// </summary>
+			/// <param name="optionalguildname"></param>
+			/// <returns></returns>
 			[Command("total110count"), Alias("g110t")]
 			[Remarks("Gets the total number of level 110's for a guild.\n")]
 			[Summary("EX: ripbot get total110count\nEX: ripbot get total110count Hordecorp\n")]
 			[MinPermissions(AccessLevel.User)]
-			public async Task Total110Count([Remainder]string optionalguildname = null)
+			public async Task Total110CountCmd([Remainder]string optionalguildname = null)
 			{
 				//string realm = optionalrealmname != "" ? optionalrealmname : Utility.DEFAULTREALM;
 				string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
@@ -750,6 +792,7 @@ namespace RipBot.Modules
 				DataAccess da = new DataAccess();
 				int totalmembers = 0;
 				int count = da.Get110Count(guildname, out totalmembers);
+				da.Dispose();
 				da = null;
 
 				sb.AppendLine(String.Format("There are {0} level 110 members out of {1} members in {2}.", count.ToString(), totalmembers.ToString(), guildname));
@@ -760,12 +803,17 @@ namespace RipBot.Modules
 
 
 
+			/// <summary>
+			/// Gets the class totals for a guild from the cache.
+			/// </summary>
+			/// <param name="optionalguildname">The optional guild name to get the class totals for.</param>
+			/// <returns></returns>
 			[Command("classtotals"), Alias("gct")]
 			//[Remarks("Gets the class totals for a guild. \n__*Any guild name with spaces must be enclosed in quotes*__")]
 			[Remarks("Gets the class totals for a guild.\n")]
 			[Summary("EX: ripbot get classtotals\nEX: ripbot get classtotals Hordecorp\n")]
 			[MinPermissions(AccessLevel.User)]
-			public async Task ClassTotals([Remainder]string optionalguildname = null)
+			public async Task ClassTotalsCmd([Remainder]string optionalguildname = null)
 			{
 				string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
 				//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
@@ -777,6 +825,7 @@ namespace RipBot.Modules
 				if (!da.DoesGuildExist(guildname))
 				{
 					await ReplyAsync("Guild not found in database.");
+					da.Dispose();
 					da = null;
 					return;
 				}
@@ -807,17 +856,23 @@ namespace RipBot.Modules
 
 
 
+			/// <summary>
+			/// Gets a list of players in a guild who meet the specified iLvl from the cache.
+			/// </summary>
+			/// <param name="minimumaverageitemlevel">The minimum iLvl the player must have to be included.</param>
+			/// <param name="optionalrole">Optionally narrow the list down by roles (DPS, HEALING, TANK).</param>
+			/// <returns></returns>
 			[Command("raidready")]
 			[Remarks("Gets a list of players in a guild who meet the specified iLvl.\n")]
 			[Summary("EX: ripbot get raidready 840\nEX: ripbot get raidready 840 dps\n")]
 			[MinPermissions(AccessLevel.User)]
-			public async Task RaidReady(string minimumaverageitemlevel, string optionalrole = null)
+			public async Task RaidReadyCmd(string minimumaverageitemlevel, string optionalrole = null)
 			{
 				//string realm = optionalrealmname != "" ? optionalrealmname : Globals.DEFAULTREALM;
 				//string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
 				string guildname = Globals.DEFAULTGUILDNAME;
-				string role = optionalrole ?? "*";	// the asterik will mean all roles
-				//string realm = optionalrealmname ?? Globals.DEFAULTREALM;
+				string role = optionalrole ?? "*";  // the asterik will mean all roles
+													//string realm = optionalrealmname ?? Globals.DEFAULTREALM;
 
 				//string showcacheddatetmp = optionalshowcacheddate ?? "false";
 				//bool showcacheddate = bool.Parse(showcacheddatetmp);
@@ -827,6 +882,7 @@ namespace RipBot.Modules
 
 				DataAccess da = new DataAccess();
 				DataTable players = da.GetRaidReadyPlayers(guildname, minimumaverageitemlevel, role);
+				da.Dispose();
 				da = null;
 
 
@@ -868,11 +924,17 @@ namespace RipBot.Modules
 
 
 
+			/// <summary>
+			/// Gets a list of level 110 players in a guild who are less than the specified iLvl from the cache.
+			/// </summary>
+			/// <param name="averageitemlevel">The minimum iLvl the player must have to be included.</param>
+			/// <param name="optionalguildname">The optional guild name to get the class totals for.</param>
+			/// <returns></returns>
 			[Command("undergeared110s")]
 			[Remarks("Gets a list of level 110 players in a guild who are less than the specified iLvl.\n")]
 			[Summary("EX: ripbot get undergeared110s 780\nEX: ripbot get undergeared110s 780 Hordecorp\n")]
 			[MinPermissions(AccessLevel.User)]
-			public async Task UnderGeared110s(string averageitemlevel, [Remainder] string optionalguildname = null)
+			public async Task UnderGeared110sCmd(string averageitemlevel, [Remainder] string optionalguildname = null)
 			{
 				//string realm = optionalrealmname != "" ? optionalrealmname : Globals.DEFAULTREALM;
 				string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
@@ -886,6 +948,7 @@ namespace RipBot.Modules
 
 				DataAccess da = new DataAccess();
 				Hashtable players = da.GetUndergeared110Players(guildname, averageitemlevel);
+				da.Dispose();
 				da = null;
 
 				var allkeys = players.Keys;
@@ -909,15 +972,21 @@ namespace RipBot.Modules
 
 
 
+			/// <summary>
+			/// Gets the players who haven't been seen in x days from the cache.
+			/// </summary>
+			/// <param name="days">The number of days to go back.</param>
+			/// <returns></returns>
 			[Command("inactiveplayers"), Alias("gip")]
 			[Remarks("Gets the players who haven't been seen in x days.\n")]
 			[Summary("EX: ripbot get inactiveplayers 90\n")]
 			[MinPermissions(AccessLevel.User)]
-			public async Task InactivePlayers(int days)
+			public async Task InactivePlayersCmd(int days)
 			{
 				StringBuilder sb = new StringBuilder();
 				DataAccess da = new DataAccess();
 				DataTable dt = da.GetInactivePlayers(days);
+				da.Dispose();
 				da = null;
 
 				int intrank = 0;
@@ -929,7 +998,7 @@ namespace RipBot.Modules
 				foreach (DataRow dr in dt.Rows)
 				{
 					intrank = int.Parse(dr["GuildRank"].ToString());
-					grr = (Globals.GUILDRANK) intrank;
+					grr = (Globals.GUILDRANK)intrank;
 					playersrank = grr.ToString();
 
 					sb.AppendLine("**" + dr["PlayerName"].ToString() + "**\t(" + playersrank + ") last seen " + dr["LastModifiedReadable"].ToString());

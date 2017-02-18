@@ -13,11 +13,11 @@ namespace RipBot
 		private CommandService _cmds;
 
 
-		//private IDependencyMap map;
-
-
-
-
+		/// <summary>
+		/// Loads the bots modules and sets some events.
+		/// </summary>
+		/// <param name="c"></param>
+		/// <returns></returns>
 		public async Task Install(DiscordSocketClient c)
 		{
 			_client = c;                                                 // Save an instance of the discord client.
@@ -37,12 +37,6 @@ namespace RipBot
 		}
 
 
-		//private Task _client_Disconnected(Exception arg)
-		//{
-		//	//Console.WriteLine("Disconnected");
-		//	return Task.CompletedTask;
-		//}
-
 		private Task _client_Connected()
 		{
 			//Console.WriteLine("Connected");
@@ -51,49 +45,8 @@ namespace RipBot
 
 
 
-
-		//public async Task Install(IDependencyMap _map)
-		//{
-		//	// Create Command Service, inject it into Dependency Map
-		//	_client = _map.Get<DiscordSocketClient>();
-		//	_cmds = new CommandService();
-		//	_map.Add(_cmds);
-		//	map = _map;
-
-		//	await _cmds.AddModulesAsync(Assembly.GetEntryAssembly());
-
-		//	_client.MessageReceived += HandleCommand;
-		//}
-
-
-
-
 		private async Task HandleCommand(SocketMessage s)
 		{
-			//// Don't handle the command if it is a system message
-			//var msg = s as SocketUserMessage;
-			//if (msg == null) return;
-
-			//// Mark where the prefix ends and the command begins
-			//int argPos = 0;
-			//// Determine if the message has a valid prefix, adjust argPos 
-			////if (!(message.HasMentionPrefix(_client.CurrentUser, ref argPos) || message.HasCharPrefix('!', ref argPos))) return;
-			//if (!(msg.HasMentionPrefix(_client.CurrentUser, ref argPos) || msg.HasStringPrefix(BotConfiguration.Load().Prefix, ref argPos))) return;
-
-			//// Create a Command Context
-			//var context = new CommandContext(_client, msg);
-			//// Execute the Command, store the result
-			//var result = await _cmds.ExecuteAsync(context, argPos, map);
-
-			//// If the command failed, notify the user
-			//if (!result.IsSuccess)
-			//	await msg.Channel.SendMessageAsync($"**Error:** {result.ErrorReason}");
-
-
-
-
-
-
 			// Don't handle the command if it is a system message
 			var msg = s as SocketUserMessage;
 			if (msg == null)                                    // Check if the received message is from a user.

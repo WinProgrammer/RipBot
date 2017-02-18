@@ -12,84 +12,15 @@ using Discord.Commands;
 
 namespace RipBot
 {
+	/// <summary>
+	/// 
+	/// </summary>
 	public class Program
 	{
-		//// Convert our sync main to an async main.
-		//public static void Main(string[] args) =>
-		//	new Program().Start().GetAwaiter().GetResult();
-
-		//private DiscordSocketClient client;
-		//private CommandHandler handler;
-
-		//public async Task Start()
-		//{
-		//	EnsureBotConfigExists();                            // Ensure the configuration file has been created.
-
-		//	EnsureWoWConfigExists();
-
-
-
-		//	client = new DiscordSocketClient(new DiscordSocketConfig()
-		//	{
-		//		LogLevel = LogSeverity.Verbose                  // Specify console verbose information level.
-		//	});
-
-		//	client.Log += (l)                               // Register the console log event.
-		//		=> Task.Run(()
-		//		=> Console.WriteLine($"[{l.Severity}] {l.Source}: {l.Exception?.ToString() ?? l.Message}"));
-
-		//	client.Log += Logger;
-
-		//	await client.LoginAsync(TokenType.Bot, BotConfiguration.Load().Token);
-		//	await client.ConnectAsync();
-
-		//	//	_commands = new CommandHandler();               // Initialize the command handler service
-		//	//	await _commands.Install(_client);
-
-		//	//	await Task.Delay(-1);                            // Prevent the console window from closing.
-		//	//}
-
-
-
-
-
-
-
-		//	//// Define the DiscordSocketClient
-		//	//client = new DiscordSocketClient();
-
-		//	//var token = "token here";
-
-		//	//// Login and connect to Discord.
-		//	//await client.LoginAsync(TokenType.Bot, token);
-		//	//await client.ConnectAsync();
-
-		//	var map = new DependencyMap();
-		//	map.Add(client);
-
-		//	handler = new CommandHandler();
-		//	await handler.Install(map);
-
-		//	// Block this program until it is closed.
-		//	await Task.Delay(-1);
-		//}
-
-		////private Task Log(LogMessage msg)
-		////{
-		////	Console.WriteLine(msg.ToString());
-		////	return Task.CompletedTask;
-		////}
-
-
-
-
-
-
-
-
-
-
-
+		/// <summary>
+		/// Entry Point.
+		/// </summary>
+		/// <param name="args"></param>
 		public static void Main(string[] args)
 			=> new Program().Start().GetAwaiter().GetResult();
 
@@ -98,6 +29,10 @@ namespace RipBot
 		private CommandHandler _commands;
 
 
+		/// <summary>
+		/// Starts the bot.
+		/// </summary>
+		/// <returns></returns>
 		public async Task Start()
 		{
 			EnsureBotConfigExists();                            // Ensure the configuration file has been created.
@@ -158,6 +93,9 @@ namespace RipBot
 
 
 
+		/// <summary>
+		/// Ensures the bots configuration file exists, prompting for the info if it doesn't.
+		/// </summary>
 		public static void EnsureBotConfigExists()
 		{
 			if (!Directory.Exists(Path.Combine(AppContext.BaseDirectory, "data")))
@@ -184,6 +122,9 @@ namespace RipBot
 		}
 
 
+		/// <summary>
+		/// Ensures the WoW configuration file exists, prompting for the info if it doesn't.
+		/// </summary>
 		public static void EnsureWoWConfigExists()
 		{
 			if (!Directory.Exists(Path.Combine(AppContext.BaseDirectory, "data")))
@@ -213,6 +154,9 @@ namespace RipBot
 		}
 
 
+		/// <summary>
+		/// Ensures the MOTD configuration file exists, creating a default one if it doesn't.
+		/// </summary>
 		public static void EnsureMOTDConfigExists()
 		{
 			if (!Directory.Exists(Path.Combine(AppContext.BaseDirectory, "data")))

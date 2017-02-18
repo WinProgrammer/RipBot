@@ -22,7 +22,9 @@ namespace RipBot.Types
 
 
 
-
+		/// <summary>
+		/// CStor.
+		/// </summary>
 		public MOTDConfiguration()
 		{
 			//Message = "Default MOTD message";

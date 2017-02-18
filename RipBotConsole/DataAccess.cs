@@ -102,6 +102,13 @@ namespace RipBot
 			return field;
 		}
 
+
+
+		/// <summary>
+		/// Executes an ExecuteScalar() from a sql query.
+		/// </summary>
+		/// <param name="sql">The sql script to execute. IE: SELECT Count('PlayerName') FROM PLAYERS</param>
+		/// <returns>A single value as a String.</returns>
 		public string GetFieldValue(string sql)
 		{
 			if (!_isdbopen)
@@ -116,11 +123,13 @@ namespace RipBot
 			}
 			catch (SQLiteException se)
 			{
-				Debug.Fail(se.Message);
+				Console.WriteLine(se.Message);
+				//Debug.Fail(se.Message);
 			}
 			catch (Exception ex)
 			{
-				Debug.Fail(ex.Message);
+				Console.WriteLine(ex.Message);
+				//Debug.Fail(ex.Message);
 			}
 
 			if (null == ret)
@@ -151,11 +160,13 @@ namespace RipBot
 			}
 			catch (SQLiteException se)
 			{
-				Debug.Fail(se.Message);
+				Console.WriteLine(se.Message);
+				//Debug.Fail(se.Message);
 			}
 			catch (Exception ex)
 			{
-				Debug.Fail(ex.Message);
+				Console.WriteLine(ex.Message);
+				//Debug.Fail(ex.Message);
 			}
 
 			return dt;
@@ -216,9 +227,9 @@ namespace RipBot
 		/// </summary>
 		/// <param name="playerstoremove">The list of players to remove.</param>
 		/// <returns>True if successful, otherwise False.</returns>
-		public bool PurgePlayers(List<string> playerstoremove)
+		public int PurgePlayers(List<string> playerstoremove)
 		{
-			bool ret = true;
+			int ret = 0;
 
 			if (!_isdbopen)
 				this.Open();
@@ -232,14 +243,17 @@ namespace RipBot
 				{
 					cmd = new SQLiteCommand("DELETE FROM PLAYERS WHERE PlayerName = '" + playername + "'", _cnn);
 					qryret = cmd.ExecuteScalar();
+					ret++;
 				}
 				catch (SQLiteException se)
 				{
-					Debug.Fail(se.Message);
+					Console.WriteLine(se.Message);
+					//Debug.Fail(se.Message);
 				}
 				catch (Exception ex)
 				{
-					Debug.Fail(ex.Message);
+					Console.WriteLine(ex.Message);
+					//Debug.Fail(ex.Message);
 				}
 
 				//if (null == qryret)
@@ -284,7 +298,7 @@ namespace RipBot
 		/// Gets a readable date from the wow Guild LastModified date, which in unix time.
 		/// </summary>
 		/// <param name="guildname">The name of the guild to get the date for.</param>
-		/// <returns>A readable/usable date.</returns>
+		/// <returns>A readable/usable date, or 1-1-1970 if there was an error.</returns>
 		public DateTime GetGuildLastModifiedReadableDate(string guildname)
 		{
 			DateTime dt = DateTime.Now;
@@ -306,7 +320,7 @@ namespace RipBot
 		/// Gets the date the record was cached in the GUILDS table.
 		/// </summary>
 		/// <param name="guildname">The player to look up.</param>
-		/// <returns>The date the record was cached.</returns>
+		/// <returns>The date the record was cached, or 1-1-1970 if there was an error.</returns>
 		public DateTime GetGuildCachedDateUnixReadable(string guildname)
 		{
 			DateTime dt = DateTime.Now;
@@ -329,7 +343,7 @@ namespace RipBot
 		/// Gets a readable date from the wow PLAYER LastModified date, which in unix time.
 		/// </summary>
 		/// <param name="playername">The name of the guild to get the date for.</param>
-		/// <returns>A readable/usable date.</returns>
+		/// <returns>A readable/usable date, or 1-1-1970 if there was an error.</returns>
 		public DateTime GetPlayerLastModifiedReadableDate(string playername)
 		{
 			DateTime dt = DateTime.Now;
@@ -351,7 +365,7 @@ namespace RipBot
 		/// Gets the date the record was cached in the PLAYERS table.
 		/// </summary>
 		/// <param name="playername">The player to look up.</param>
-		/// <returns>The date the record was cached.</returns>
+		/// <returns>The date the record was cached, or 1-1-1970 if there was an error.</returns>
 		public DateTime GetPlayerCachedDateUnixReadableDate(string playername)
 		{
 			DateTime dt = DateTime.Now;
@@ -472,25 +486,6 @@ namespace RipBot
 			qry = string.Format(baseqry, "Warrior");
 			TOTALS.Add("WARRIOR", int.Parse(GetFieldValue(qry)));
 
-			//string a = GetFieldValue("sql");
-
-
-			//foreach (GuildMember guildmember in theguild.Members)
-			//{
-			//	int c = (int) TOTALS[guildmember.Character.Class.ToString()];
-			//	TOTALS[guildmember.Character.Class.ToString()] = c++;
-			//}
-
-
-			//List<string> classtotals = new List<string>();
-
-			//DataTable dt = GetTable("SELECT PlayerName FROM PLAYERS WHERE GuildRank = '2' AND GuildName = 'Hordecorp'", "HighCouncil");
-
-			//foreach (DataRow dr in dt.Rows)
-			//{
-			//	hc.Add(dr["PlayerName"].ToString());
-			//}
-
 			return TOTALS;
 		}
 
@@ -503,28 +498,6 @@ namespace RipBot
 		/// <returns>A HAshtable containing the players and thier average ilvl.</returns>
 		public DataTable GetRaidReadyPlayers(string guildname, string ilvl, string role)
 		{
-			////string tm = GetFieldValue("SELECT COUNT(PlayerName) FROM PLAYERS WHERE GuildName = '" + guildname + "'");
-			////totalmembers = int.Parse(tm);
-
-			//Hashtable players = new Hashtable();
-
-			//// make sure the guild exists
-			//if (!DoesGuildExist(guildname)) return players;
-
-			////var sd = new SortedDictionary<string, int>;
-			////players.Cast(sd.);
-
-
-
-			//string qry = "SELECT PlayerName, AverageItemLevel FROM PLAYERS WHERE Guildname = '" + guildname + "' AND AverageItemLevel >= " + ilvl + " ORDER BY AverageItemLevel DESC";
-
-			//DataTable dt = GetTable(qry, "RaidReadyPlayers");
-
-			//foreach (DataRow dr in dt.Rows)
-			//{
-			//	players.Add(dr["PlayerName"].ToString(), dr["AverageItemLevel"].ToString());
-			//}
-
 			role = role.ToUpper();
 
 			DataTable players = null;
@@ -628,61 +601,6 @@ namespace RipBot
 				Console.WriteLine(ex.Message);
 				return -1;
 			}
-
-
-
-
-
-
-			//// start by building an INSERT query
-			//string sql = BuildGuildInfoInsertSQL(theguild);
-
-			//// attempt to INSERT the database
-			//cmd = new SQLiteCommand(sql, _cnn);
-			//try
-			//{
-			//	numrows += cmd.ExecuteNonQuery();
-			//	//Debug.Assert(numrows > 0);
-
-			//	if (GuildInfoUpdated != null)
-			//	{
-			//		// someone is subscribed, throw event
-			//		GuildInfoUpdated(this, new EventArgs());
-			//	}
-			//}
-			//catch (SQLiteException se)
-			//{
-			//	if (se.ResultCode.ToString() == "Constraint")
-			//	{
-			//		// the INSERT failed because the record exists, so UPDATE it instead
-			//		try
-			//		{
-			//			sql = BuildGuildInfoUpdateSQL(theguild);
-			//			cmd = new SQLiteCommand(sql, _cnn);
-			//			numrows += cmd.ExecuteNonQuery();
-			//			//Debug.Assert(numrows > 0);
-			//		}
-			//		catch (SQLiteException see)
-			//		{
-			//			Console.WriteLine(see.Message);
-			//			//if (se.ResultCode.ToString() == "Constraint")
-			//			//{
-			//			//	// it exists, so update it instead
-			//			//}
-			//			return -1;
-			//		}
-			//		catch (Exception ex)
-			//		{
-			//			Debug.Fail(ex.Message);
-			//			return -1;
-			//		}
-			//	}
-			//}
-			//catch (Exception ex)
-			//{
-			//	Debug.Fail(ex.Message);
-			//	return -1;
-			//}
 
 			return numrows;
 		}
@@ -821,61 +739,6 @@ namespace RipBot
 					continue;
 					//return -1;
 				}
-
-
-				//// start by building an INSERT query
-				//sql = BuildInsertGuildMemberSQL(theguild.Name, guildmember);
-
-				//// attempt to INSERT the database
-				//cmd = new SQLiteCommand(sql, _cnn);
-				//try
-				//{
-				//	numrows += cmd.ExecuteNonQuery();
-				//	inserts++;
-				//	//Debug.Assert(numrows > 0);
-
-				//	//if (GuildInfoUpdated != null)
-				//	//{
-				//	//	// someone is subscribed, throw event
-				//	//	GuildInfoUpdated(this, new EventArgs());
-				//	//}
-				//}
-				//catch (SQLiteException se)
-				//{
-				//	if (se.ResultCode.ToString() == "Constraint")
-				//	{
-				//		// the INSERT failed because the record exists, so UPDATE it instead
-				//		try
-				//		{
-				//			sql = BuildUpdateGuildMemberSQL(theguild.Name, guildmember);
-				//			cmd = new SQLiteCommand(sql, _cnn);
-				//			numrows += cmd.ExecuteNonQuery();
-				//			updates++;
-				//			//Debug.Assert(numrows > 0);
-				//		}
-				//		catch (SQLiteException see)
-				//		{
-				//			Console.WriteLine(see.Message);
-				//			//if (se.ResultCode.ToString() == "Constraint")
-				//			//{
-				//			//	// it exists, so update it instead
-				//			//}
-				//			continue;
-				//			//return -1;
-				//		}
-				//		catch (Exception ex)
-				//		{
-				//			Debug.Fail(ex.Message);
-				//			continue;
-				//			//return -1;
-				//		}
-				//	}
-				//}
-				//catch (Exception ex)
-				//{
-				//	Debug.Fail(ex.Message);
-				//	return -1;
-				//}
 			}
 
 			return numrows;
@@ -904,21 +767,6 @@ namespace RipBot
 				);
 			sb.Append(sql);
 
-			//sb.Append(String.Format("{12}, '{0}', '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}'",
-			//	guildmember.Character.Name,
-			//	theguildname,
-			//	Utility.ToTitleCase(guildmember.Character.Class.ToString()),
-			//	Utility.ToTitleCase(guildmember.Character.Gender.ToString()),
-			//	guildmember.Character.GuildRealm,
-			//	guildmember.Character.LastModified,
-			//	Utility.ConvertUnixToLocalTime(guildmember.Character.LastModified),
-			//	guildmember.Character.Level.ToString(),
-			//	Utility.ToTitleCase(guildmember.Character.Race.ToString()),
-			//	guildmember.Rank.ToString(),
-			//	guildmember.Character.Specialization != null ? Utility.ToTitleCase(guildmember.Character.Specialization.Name) : "UNKNOWN",
-			//	guildmember.Character.Specialization != null ? guildmember.Character.Specialization.Role : "UNKNOWN",
-			//	"null"
-			//	));
 			sb.Append(")");
 
 			return sb.ToString();
@@ -1006,66 +854,6 @@ namespace RipBot
 				Console.WriteLine(ex.Message);
 				return false;
 			}
-
-
-
-			//// start by building an INSERT query
-			//sql = BuildInsertPlayerSQL(player);
-
-			//// attempt to INSERT the database
-			//cmd = new SQLiteCommand(sql, _cnn);
-			//try
-			//{
-			//	numrows += cmd.ExecuteNonQuery();
-			//	Console.WriteLine("");
-			//	//Debug.Assert(numrows > 0);
-
-			//	//if (GuildInfoUpdated != null)
-			//	//{
-			//	//	// someone is subscribed, throw event
-			//	//	GuildInfoUpdated(this, new EventArgs());
-			//	//}
-			//}
-			//catch (SQLiteException se)
-			//{
-			//	if (se.ResultCode.ToString() == "Mismatch")
-			//	{
-			//		// data type mismatch
-			//		Console.WriteLine("");
-			//	}
-			//	if (se.ResultCode.ToString() == "Constraint")
-			//	{
-			//		// the INSERT failed because the record exists, so UPDATE it instead
-			//		try
-			//		{
-			//			sql = BuildUpdatePlayerSQL(player);
-			//			cmd = new SQLiteCommand(sql, _cnn);
-			//			numrows += cmd.ExecuteNonQuery();
-			//			Console.WriteLine("");
-			//			//Debug.Assert(numrows > 0);
-			//		}
-			//		catch (SQLiteException see)
-			//		{
-			//			Console.WriteLine(see.Message);
-			//			//if (se.ResultCode.ToString() == "Constraint")
-			//			//{
-			//			//	// it exists, so update it instead
-			//			//}
-			//			return false;
-			//		}
-			//		catch (Exception ex)
-			//		{
-			//			Debug.Fail(ex.Message);
-			//			return false;
-			//		}
-			//	}
-			//}
-			//catch (Exception ex)
-			//{
-			//	Debug.Fail(ex.Message);
-			//	return false;
-			//}
-
 
 			return true;
 		}
@@ -1174,7 +962,6 @@ namespace RipBot
 				Console.WriteLine(ex.Message);
 
 			}
-
 
 			return sb.ToString();
 		}

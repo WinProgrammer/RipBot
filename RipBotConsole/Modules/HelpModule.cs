@@ -6,15 +6,29 @@ using System.Threading.Tasks;
 
 namespace RipBot.Modules
 {
+	/// <summary>
+	/// Handles the help commands.
+	/// </summary>
+	[Name("Help")]
+	//[RequireContext(ContextType.Guild)]
 	public class HelpModule : ModuleBase<SocketCommandContext>
 	{
 		private CommandService _service;
 
+		/// <summary>
+		/// CStor.
+		/// </summary>
+		/// <param name="service"></param>
 		public HelpModule(CommandService service)           // Create a constructor for the commandservice dependency
 		{
 			_service = service;
 		}
 
+
+		/// <summary>
+		/// Display available commands and thier usage.
+		/// </summary>
+		/// <returns></returns>
 		[Command("help")]
 		[Remarks("Display available commands and thier usage.\n")]
 		[Summary("EX: ripbot help\n")]

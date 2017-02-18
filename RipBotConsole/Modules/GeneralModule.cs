@@ -16,14 +16,21 @@ using WowDotNetAPI.Models;
 
 namespace RipBot.Modules
 {
+	/// <summary>
+	/// Handles all general commands.
+	/// </summary>
 	[Name("General")]
 	public class GeneralModule : ModuleBase<SocketCommandContext>
 	{
+		/// <summary>
+		/// Display some bot info.
+		/// </summary>
+		/// <returns></returns>
 		[Command("info")]
 		[Remarks("Display some bot info.")]
 		[Summary("EX: ripbot info")]
 		[MinPermissions(AccessLevel.ServerAdmin)]
-		public async Task Info()
+		public async Task InfoCmd()
 		{
 			var application = await Context.Client.GetApplicationInfoAsync();
 			await ReplyAsync(
@@ -50,12 +57,16 @@ namespace RipBot.Modules
 
 
 
-
+		/// <summary>
+		/// Returns info about the current user (which would be the bot), or the user parameter, if one passed.
+		/// </summary>
+		/// <param name="user">The IUser to get info on.</param>
+		/// <returns></returns>
 		[Command("userinfo"), Alias("user", "whois")]
 		[Remarks("Returns info about the current user (which would be the bot), or the user parameter, if one passed.")]
 		[Summary("EX: ripbot userinfo\nEX: ripbot userinfo Ripgut\nEX: ripbot userinfo 96642168176807936\n")]
 		[MinPermissions(AccessLevel.ServerAdmin)]
-		public async Task UserInfo([Summary("The (optional) user to get info for")] IUser user = null)
+		public async Task UserInfoCmd([Summary("The (optional) user to get info for")] IUser user = null)
 		{
 			var userInfo = user ?? Context.Client.CurrentUser;
 			await ReplyAsync($"{userInfo.Username}#{userInfo.Discriminator}");

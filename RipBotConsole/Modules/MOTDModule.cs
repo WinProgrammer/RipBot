@@ -11,10 +11,16 @@ using Discord.WebSocket;
 
 namespace RipBot.Modules
 {
+	/// <summary>
+	/// Handles all MOTD commands.
+	/// </summary>
 	[Name("MOTD")]
 	[RequireContext(ContextType.Guild)]
 	public class MOTDModule : ModuleBase<SocketCommandContext>
 	{
+		/// <summary>
+		/// CStor.
+		/// </summary>
 		public MOTDModule()
 		{
 
@@ -26,7 +32,7 @@ namespace RipBot.Modules
 		//{
 		private async void MOTDTimer_Elapsed(object sender, ElapsedEventArgs e)
 		{
-			ulong ul = (ulong)Globals.OURCHANNELSNAMEKEY["general"];
+			ulong ul = (ulong)Globals.GUILDCHANNELSBYNAME["general"];
 			SocketChannel channel = Context.Client.GetChannel(ul);
 			SocketTextChannel sokText = channel as SocketTextChannel;
 			await sokText.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
@@ -40,6 +46,11 @@ namespace RipBot.Modules
 
 
 
+		/// <summary>
+		/// Sets the MOTD message.
+		/// </summary>
+		/// <param name="message">The message to set the MOTD to.</param>
+		/// <returns></returns>
 		[Command("setmotd")]
 		[Remarks("Sets the MOTD message.\n")]
 		[Summary("EX: ripbot setmotd Hey whats up? This is your message.\n")]
@@ -57,6 +68,12 @@ namespace RipBot.Modules
 			await ReplyAsync(config.Message + "\n");
 		}
 
+
+		/// <summary>
+		/// Sets the MOTD message interval in minutes.
+		/// </summary>
+		/// <param name="intervalinminutes">The number of minutes to wait to show the MOTD.</param>
+		/// <returns></returns>
 		[Command("setmotdinterval")]
 		[Remarks("Sets the MOTD message interval in minutes.\n")]
 		[Summary("EX: ripbot setmotdinterval 5\n")]
@@ -101,6 +118,10 @@ namespace RipBot.Modules
 		}
 
 
+		/// <summary>
+		/// Gets the current MOTD message.
+		/// </summary>
+		/// <returns>The current MOTD message.</returns>
 		[Command("getmotd")]
 		[Remarks("Gets the current MOTD message.\n")]
 		[Summary("EX: ripbot getmotdimessage\n")]
@@ -111,6 +132,11 @@ namespace RipBot.Modules
 			//await ReplyAsync("MOTD message is set to:\n" + Globals.CURRENTMOTDMESSAGE + "\n");
 		}
 
+
+		/// <summary>
+		/// Gets the current MOTD message interval in minutes.
+		/// </summary>
+		/// <returns>The current MOTD interval in minutes.</returns>
 		[Command("getmotdinterval")]
 		[Remarks("Gets the current MOTD message interval in minutes.\n")]
 		[Summary("EX: ripbot getmotdinterval\n")]
@@ -123,6 +149,10 @@ namespace RipBot.Modules
 
 
 
+		/// <summary>
+		/// Starts the MOTD timer.
+		/// </summary>
+		/// <returns></returns>
 		[Command("startmotdtimer")]
 		[Remarks("Starts the MOTD timer.\n")]
 		[Summary("EX: ripbot startmotdtimer\n")]
@@ -181,7 +211,10 @@ namespace RipBot.Modules
 
 
 
-		// Example commands
+		/// <summary>
+		/// Stops the MOTD timer.
+		/// </summary>
+		/// <returns></returns>
 		[Command("stopmotdtimer")]
 		[Remarks("Stops the MOTD timer.\n")]
 		[Summary("EX: ripbot stopmotdtimer\n")]

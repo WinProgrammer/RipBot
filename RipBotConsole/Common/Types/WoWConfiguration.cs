@@ -26,7 +26,9 @@ namespace RipBot.Types
 		public string DefaultRealm { get; set; }
 
 
-
+		/// <summary>
+		/// CStor.
+		/// </summary>
 		public WoWConfiguration()
 		{
 			// set some defaults
