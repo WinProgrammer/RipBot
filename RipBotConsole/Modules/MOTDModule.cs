@@ -35,14 +35,25 @@ namespace RipBot.Modules
 			ulong ul = (ulong)Globals.GUILDCHANNELSBYNAME["general"];
 			SocketChannel channel = Context.Client.GetChannel(ul);
 			SocketTextChannel sokText = channel as SocketTextChannel;
-			await sokText.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
+			await sokText?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
+			//           ^ This question mark is used to indicate that 'channel' may sometimes be null, and in cases that it is null, we will do nothing here.
 
+			
+			
 			//// this is here because we've been firing off the bot command from a different channel than general
 			//// and will also message it
 			//await ReplyAsync("Timer fired at " + DateTime.Now.ToString() + "\n");
 			//await ReplyAsync("MOTD:\n" + Globals.CURRENTMOTDMESSAGE + "\n");
 		}
 
+
+		private async Task SendMessageToChannel(ulong ChannelId)
+		{
+			// TODO: maybe use this for MOTD sending
+			var channel = Context.Client.GetChannel(ChannelId) as ISocketMessageChannel;
+			await channel?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
+			//           ^ This question mark is used to indicate that 'channel' may sometimes be null, and in cases that it is null, we will do nothing here.
+		}
 
 
 
