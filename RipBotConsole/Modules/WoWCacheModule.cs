@@ -52,7 +52,7 @@ namespace RipBot.Modules
 			Character player = null;
 			StringBuilder sb = new StringBuilder();
 
-			sb.AppendLine("Attempting to update " + guildname);
+			sb.AppendLine("Attempting to update " + guildname + "  (" + DateTime.Now.ToString() + ")");
 			await ReplyAsync(sb.ToString());
 
 			DataAccess da = new DataAccess();
@@ -89,12 +89,10 @@ namespace RipBot.Modules
 			int numofupdatedplayers = 0;
 
 
-			// Get the list of playernames in a guild who have a matching lvl
+			// Get the list of playernames in a guild from the cache who have a matching lvl
 			DataTable matchingplayers = da.GetTable("SELECT PlayerName FROM PLAYERS WHERE Level = " + level + " AND GuildName = '" + guildname + "'", "Matches");
 			if (matchingplayers != null & matchingplayers.Rows.Count > 0)
 			{
-
-
 				numofplayers = matchingplayers.Rows.Count;
 				numofupdatedplayers = 0;
 
@@ -113,7 +111,7 @@ namespace RipBot.Modules
 					catch (Exception ex)
 					{
 						Console.WriteLine(ex.Message);
-						sb.AppendLine("Player " + dr["PlayerName"].ToString() + " not found.");
+						sb.AppendLine("Player " + dr["PlayerName"].ToString() + " not found.\nREASON: " + ex.Message + "\n");
 						//await ReplyAsync("Player " + dr["PlayerName"].ToString() + " not found.\r\n");
 						//Application.DoEvents();
 						continue;
@@ -150,7 +148,7 @@ namespace RipBot.Modules
 			}
 			else
 			{
-				sb.AppendLine("There aren't any level " + level.ToString() + " players in the guild.");
+				sb.AppendLine("There aren't any level " + level.ToString() + " players in the guild.  (" + DateTime.Now.ToString() + ")\n");
 				//await ReplyAsync("There aren't any level " + level.ToString() + " players in the guild.\r\n");
 			}
 
@@ -163,7 +161,7 @@ namespace RipBot.Modules
 			player = null;
 
 			await ReplyAsync(sb.ToString() + "\n");
-			await ReplyAsync("FINISHED adding/updating " + numofupdatedplayers.ToString() + " level " + level + " players out of " + numofplayers.ToString() + "\r\n");
+			await ReplyAsync("FINISHED adding/updating " + numofupdatedplayers.ToString() + " level " + level + " players out of " + numofplayers.ToString() + "  (" + DateTime.Now.ToString() + ")\n");
 		}
 
 
