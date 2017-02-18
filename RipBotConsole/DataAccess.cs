@@ -187,6 +187,70 @@ namespace RipBot
 
 
 		/// <summary>
+		/// Gets a list of players for a specific guild.
+		/// </summary>
+		/// <param name="guildname">The guild to check.</param>
+		/// <returns>A list of the guilds players.</returns>
+		public List<string> GetPlayers(string guildname)
+		{
+			List<string> players = new List<string>();
+
+
+			DataTable dt = new DataTable();
+
+			string qry = "SELECT Playername FROM PLAYERS WHERE GuildName = '" + guildname + "'";
+			dt = GetTable(qry, "Players");
+
+			foreach (DataRow dr in dt.Rows)
+			{
+				players.Add(dr["PlayerName"].ToString());
+			}
+
+			return players;
+		}
+
+
+
+		/// <summary>
+		/// Removes a List of players from the PLAYERS table.
+		/// </summary>
+		/// <param name="playerstoremove">The list of players to remove.</param>
+		/// <returns>True if successful, otherwise False.</returns>
+		public bool PurgePlayers(List<string> playerstoremove)
+		{
+			bool ret = true;
+
+			if (!_isdbopen)
+				this.Open();
+
+			object qryret = null;
+			SQLiteCommand cmd = new SQLiteCommand();
+
+			foreach (string playername in playerstoremove)
+			{
+				try
+				{
+					cmd = new SQLiteCommand("DELETE FROM PLAYERS WHERE PlayerName = '" + playername + "'", _cnn);
+					qryret = cmd.ExecuteScalar();
+				}
+				catch (SQLiteException se)
+				{
+					Debug.Fail(se.Message);
+				}
+				catch (Exception ex)
+				{
+					Debug.Fail(ex.Message);
+				}
+
+				//if (null == qryret)
+				//	qryret = "";
+			}
+
+			return ret;
+		}
+
+
+		/// <summary>
 		/// Gets a list of inactive players.
 		/// </summary>
 		/// <param name="days">The number of days back to check for.</param>

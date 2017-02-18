@@ -9,6 +9,10 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
+using System.Collections;
+using WowDotNetAPI;
+using WowDotNetAPI.Models;
 
 namespace RipBot.Modules
 {
@@ -60,7 +64,10 @@ namespace RipBot.Modules
 
 
 
-
+		/// <summary>
+		/// Used for running various short tests.
+		/// </summary>
+		/// <returns></returns>
 		[Command("test")]
 		[Remarks("test")]
 		[Summary("ripbot test")]

@@ -197,5 +197,92 @@ namespace RipBot.Modules
 
 
 
+		[Command("purgeplayers"), Alias("pp")]
+		[Remarks("Purges a guilds players from the cache who are no longer are in the guild. (PLAYERS table)\n")]
+		[Summary("EX: ripbot purgeplayers\nEX: ripbot purgeplayers Hordecorp")]
+		[MinPermissions(AccessLevel.ServerAdmin)]
+		public async Task PurgePlayersCmd([Remainder] string optionalguildname)
+		{
+			string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
+
+			await ReplyAsync("Attempting to purge players in " + guildname + "  (" + DateTime.Now.ToString() + ").\n");
+
+			List<string> playerstoremove = new List<string>();
+
+
+			#region pull guildmembers list from Blizz
+
+			// pull guildmembers list from Blizz
+			Hashtable guildmembers = new Hashtable();
+			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
+			Guild theguild = null;
+			try
+			{
+				theguild = explorer.GetGuild(Globals.DEFAULTREALM, guildname, GuildOptions.GetEverything);
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+				if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
+				{
+					await ReplyAsync("Blizzard API service is down.\n");
+				}
+				await ReplyAsync(guildname + " guild not found.");
+				return;
+			}
+
+			// Update the guild and guildmember(PLAYERS) tables
+			UpdateGuildInfo(theguild);
+
+			// loop through the guildmembers and add to HashTable using players name as key
+			foreach (GuildMember guildmember in theguild.Members)
+			{
+				guildmembers.Add(guildmember.Character.Name, guildmember.Character.Name);
+			}
+
+			theguild = null;
+			explorer = null;
+
+			#endregion
+
+
+			#region pull players list from cache
+
+			// create players list from cache
+			//List<string> players = new List<string>();
+			DataAccess da = new DataAccess();
+			List<string> players = da.GetPlayers(guildname);
+			players.Sort();
+
+			#endregion
+
+
+			#region store the playernames to purge
+
+			// store the playernames to purge
+			foreach (string playername in players)
+			{
+				// check if player exist in guildmember list
+				if (guildmembers.ContainsKey(playername))
+					continue;
+
+				// if it doesn't then add to removal list
+				playerstoremove.Add(playername);
+
+			}
+
+			#endregion
+
+
+			// remove the players from the cache who are in the removal list
+			bool playersdeletedfromguild = da.PurgePlayers(playerstoremove);
+			da.Dispose();
+			da = null;
+
+
+
+			await ReplyAsync("Players purged from " + guildname + "  (" + DateTime.Now.ToString() + ").\n");
+		}
+
 	}
 }
