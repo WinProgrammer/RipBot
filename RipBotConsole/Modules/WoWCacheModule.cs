@@ -220,7 +220,7 @@ namespace RipBot.Modules
 		[Remarks("Purges a guilds players from the cache who are no longer are in the guild. (PLAYERS table)\n")]
 		[Summary("EX: ripbot purgeplayers\nEX: ripbot purgeplayers Hordecorp")]
 		[MinPermissions(AccessLevel.ServerAdmin)]
-		public async Task PurgePlayersCmd([Remainder] string optionalguildname)
+		public async Task PurgePlayersCmd([Remainder] string optionalguildname = null)
 		{
 			string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
 
@@ -302,7 +302,7 @@ namespace RipBot.Modules
 
 
 
-			await ReplyAsync(playersdeletedfromguild + " players purged from " + guildname + " out of " + playerstoremove.Count.ToString() + " to be purged  (" + DateTime.Now.ToString() + ").\n");
+			await ReplyAsync(playersdeletedfromguild + " players purged from " + guildname + " cache out of " + playerstoremove.Count.ToString() + " to be purged  (" + DateTime.Now.ToString() + ").\n");
 			//await ReplyAsync(guildname + " had " + players.Count.ToString() + " members and now has " + DateTime.Now.ToString() + " members.\n");
 		}
 

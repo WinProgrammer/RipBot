@@ -24,25 +24,27 @@ namespace RipBot
 			_cmds = new CommandService();                                // Create a new instance of the commandservice.                              
 
 			await _cmds.AddModulesAsync(Assembly.GetEntryAssembly());    // Load all modules from the assembly.
-			
-			_client.MessageReceived += HandleCommand;                    // Register the messagereceived event to handle commands.
+
+			_client.MessageReceived += MessageReceived;                    // Register the messagereceived event to handle commands.
 
 			_client.Connected += _client_Connected;
 			_client.Disconnected += _client_Disconnected;
 		}
 
-		private Task _client_Disconnected(System.Exception arg)
+		/// <summary>
+		/// We're doing it this way so we don't lose heartbeats (and get disconnected) in long running tasks.
+		/// </summary>
+		/// <param name="s">The message that was recieved.</param>
+		/// <returns></returns>
+		private Task MessageReceived(SocketMessage s)
 		{
-			return Task.CompletedTask;
+			Task.Run(async () =>
+			{
+				await HandleCommand(s);
+			});
+
+			return Task.FromResult(0);
 		}
-
-
-		private Task _client_Connected()
-		{
-			//Console.WriteLine("Connected");
-			return Task.CompletedTask;
-		}
-
 
 
 		private async Task HandleCommand(SocketMessage s)
@@ -66,5 +68,23 @@ namespace RipBot
 					await context.Channel.SendMessageAsync(result.ToString());
 			}
 		}
+
+
+
+
+		private Task _client_Disconnected(System.Exception arg)
+		{
+			return Task.CompletedTask;
+		}
+
+
+		private Task _client_Connected()
+		{
+			//Console.WriteLine("Connected");
+			return Task.CompletedTask;
+		}
+
+
+
 	}
 }
