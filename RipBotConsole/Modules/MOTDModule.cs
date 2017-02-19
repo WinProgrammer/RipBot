@@ -106,6 +106,14 @@ namespace RipBot.Modules
 				return;
 			}
 
+			// if the timer is running then let them know to stop it first
+			if (Globals.TIMERRUNNING)
+			{
+				await ReplyAsync("Please stop the MOTD timer before changing it's interval.\n");
+				return;
+			}
+
+
 			var config = new MOTDConfiguration();               // Create a new configuration object.
 			config.Message = Globals.CURRENTMOTDMESSAGE;
 			config.IntervalInMinutes = intervalinminutes;   // Set the new interval in minutes.
@@ -113,18 +121,18 @@ namespace RipBot.Modules
 
 			Globals.CURRENTMOTDINTERVAL = config.IntervalInMinutes;
 
-			// if the timer is running then update it's interval
-			if (Globals.TIMERRUNNING)
-			{
-				Globals.MOTDTIMER.Interval = chk;
-				await ReplyAsync("MOTD interval in minutes CHANGED to:\n");
-				await ReplyAsync(config.IntervalInMinutes + "\n");
-			}
-			else
-			{
-				await ReplyAsync("MOTD interval in minutes set to:\n");
-				await ReplyAsync(config.IntervalInMinutes + "\n");
-			}
+			//// if the timer is running then update it's interval
+			//if (Globals.TIMERRUNNING)
+			//{
+			//	Globals.MOTDTIMER.Interval = chk;
+			//	await ReplyAsync("MOTD interval in minutes CHANGED to:\n");
+			//	await ReplyAsync(config.IntervalInMinutes + "\n");
+			//}
+			//else
+			//{
+			//	await ReplyAsync("MOTD interval in minutes set to:\n");
+			//	await ReplyAsync(config.IntervalInMinutes + "\n");
+			//}
 
 		}
 
