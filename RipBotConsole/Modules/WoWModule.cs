@@ -941,22 +941,28 @@ namespace RipBot.Modules
 				//string realm = optionalrealmname ?? Globals.DEFAULTREALM;
 				//string realm = Globals.DEFAULTREALM;
 
-				StringBuilder sb = new StringBuilder();
-				sb.AppendLine("Players who are level 110 but below " + averageitemlevel + " average iLvl.\n");
-				//sb.AppendLine();
 
+
+				StringBuilder sb = new StringBuilder();
 
 				DataAccess da = new DataAccess();
-				Hashtable players = da.GetUndergeared110Players(guildname, averageitemlevel);
+				DataTable players = da.GetUndergeared110Players(guildname, averageitemlevel);
 				da.Dispose();
 				da = null;
 
-				var allkeys = players.Keys;
-				foreach (string currentilvl in allkeys)
+				sb.AppendLine("Players who are level 110 but below " + averageitemlevel + " average iLvl.\n");
+				sb.AppendLine();
+
+				foreach (DataRow dr in players.Rows)
 				{
-					sb.AppendLine(String.Format("{0} is {1}",
-						currentilvl,
-						players[currentilvl]));
+					// 0 means we haven't cached that particular player yet, so move to next record
+					if (dr["AverageItemLevel"].ToString() == "0") continue;
+
+					sb.AppendLine(String.Format("{0} has {1}\t\tLast seen {2}",
+						dr["PlayerName"].ToString(),
+						dr["AverageItemLevel"].ToString(),
+						dr["LastModifiedReadable"].ToString()));
+
 					// can't send over 2k in a message
 					if (sb.Length > 1980)
 					{

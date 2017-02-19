@@ -527,25 +527,14 @@ namespace RipBot
 		/// </summary>
 		/// <param name="guildname">The guild to check.</param>
 		/// <param name="ilvl">The minimum average ilvl to search for.</param>
-		/// <returns>A HAshtable containing the players and thier average ilvl.</returns>
-		public Hashtable GetUndergeared110Players(string guildname, string ilvl)
+		/// <returns>A DataTable containing the players, thier average ilvl and Last seen date.</returns>
+		public DataTable GetUndergeared110Players(string guildname, string ilvl)
 		{
-			Hashtable players = new Hashtable();
-
-			string qry = "SELECT PlayerName, AverageItemLevel FROM PLAYERS WHERE Guildname = '" + guildname + "' AND AverageItemLevel <= " + ilvl + " AND Level >= 110 ORDER BY AverageItemLevel DESC";
+			string qry = "SELECT PlayerName, AverageItemLevel, LastModifiedReadable FROM PLAYERS WHERE Guildname = '" + guildname + "' AND AverageItemLevel <= " + ilvl + " AND Level >= 110 ORDER BY AverageItemLevel DESC";
 
 			DataTable dt = GetTable(qry, "UndergearedPlayers");
 
-			foreach (DataRow dr in dt.Rows)
-			{
-				// 0 means we haven't cached that particular player yet, so move to next record
-				if (dr["AverageItemLevel"].ToString() == "0") continue;
-				players.Add(dr["PlayerName"].ToString(), dr["AverageItemLevel"].ToString());
-			}
-
-
-
-			return players;
+			return dt;
 		}
 
 

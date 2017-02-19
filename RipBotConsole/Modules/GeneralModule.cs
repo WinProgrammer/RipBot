@@ -56,6 +56,49 @@ namespace RipBot.Modules
 
 
 
+		/// <summary>
+		/// Displays some info about the server.
+		/// </summary>
+		/// <returns></returns>
+		[Command("serverinfo")]
+		[Remarks("Display some server info.")]
+		[Summary("EX: ripbot serverinfo")]
+		[RequireContext(ContextType.Guild)]
+		public async Task ServerInfoCmd()
+		{
+			var channel = (ITextChannel)Context.Channel;
+			IGuild guild = channel.Guild;
+			if (guild == null)
+				return;
+			var ownername = await guild.GetUserAsync(guild.OwnerId);
+			var textchn = (await guild.GetTextChannelsAsync()).Count();
+			var voicechn = (await guild.GetVoiceChannelsAsync()).Count();
+
+			var createdAt = new DateTime(2015, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc).AddMilliseconds(guild.Id >> 22);
+			var users = await guild.GetUsersAsync().ConfigureAwait(false);
+			var features = string.Join("\n", guild.Features);
+			if (string.IsNullOrWhiteSpace(features))
+				features = "-";
+			var embed = new EmbedBuilder()
+					.WithAuthor(eab => eab.WithName("Server Info"))
+					.WithTitle(guild.Name)
+					.AddField(fb => fb.WithName("**ID**").WithValue(guild.Id.ToString()).WithIsInline(true))
+					.AddField(fb => fb.WithName("**Owner**").WithValue(ownername.ToString()).WithIsInline(true))
+					.AddField(fb => fb.WithName("**Members**").WithValue(users.Count.ToString()).WithIsInline(true))
+					.AddField(fb => fb.WithName("**Text Channels**").WithValue(textchn.ToString()).WithIsInline(true))
+					.AddField(fb => fb.WithName("**Voice Channels**").WithValue(voicechn.ToString()).WithIsInline(true))
+					.AddField(fb => fb.WithName("**Created At**").WithValue($"{createdAt:MM.dd.yyyy HH:mm}").WithIsInline(true))
+					.AddField(fb => fb.WithName("**Region**").WithValue(guild.VoiceRegionId.ToString()).WithIsInline(true))
+					.AddField(fb => fb.WithName("**Roles**").WithValue((guild.Roles.Count - 1).ToString()).WithIsInline(true))
+					.AddField(fb => fb.WithName("**Features**").WithValue(features).WithIsInline(true))
+					.WithImageUrl(guild.IconUrl)
+				.WithColor(new Color(0, 191, 255))
+				;
+
+			await ReplyAsync("", embed: embed);
+		}
+
+
 
 		/// <summary>
 		/// Returns info about the current user (which would be the bot), or the user parameter, if one passed.
@@ -90,14 +133,35 @@ namespace RipBot.Modules
 
 
 
-			EmbedBuilder emb = new EmbedBuilder();
-			EmbedAuthorBuilder embauth = new EmbedAuthorBuilder();
-			embauth.Name = "Auth name";
-			//embauth.IconUrl = message.Author.AvatarUrl;
-			emb.WithAuthor(embauth);
+			EmbedBuilder emb = new EmbedBuilder()
+			//emb.WithDescription("Description");
+
+			    .WithAuthor(new EmbedAuthorBuilder()
+				.WithIconUrl("http://vignette4.wikia.nocookie.net/mspaintadventures/images/7/77/Omgitsskaia.png/revision/latest?cb=20111231073525")
+				.WithName("Profile"))
+				.WithColor(new Color(0, 191, 255))
+				//.WithThumbnailUrl("http://vignette4.wikia.nocookie.net/mspaintadventures/images/7/77/Omgitsskaia.png/revision/latest?cb=20111231073525")
+				.WithTitle("Title")
+				.WithDescription("Description")
+				//.WithTimestamp(DateTime.Now.ToLocalTime())
+				.WithCurrentTimestamp()
+				;
+
+
+
+			//// Author
+			//EmbedAuthorBuilder embauth = new EmbedAuthorBuilder();
+			//embauth.Name = "RipBot";
+			////embauth.IconUrl = message.Author.AvatarUrl;
+			//emb.WithAuthor(embauth);
+
+			bool inline = true;
+
+			// Fields
+			emb.AddField(efb => efb.WithName(Format.Bold("TestName1")).WithValue("TestValue1").WithIsInline(false));
 			emb.AddField(x =>
 			{
-				x.IsInline = true;
+				x.IsInline = inline;
 				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
 				//x.Value = message.Content;
 				x.Name = "Name1";
@@ -105,7 +169,7 @@ namespace RipBot.Modules
 			});
 			emb.AddField(x =>
 			{
-				x.IsInline = true;
+				x.IsInline = inline;
 				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
 				//x.Value = message.Content;
 				x.Name = "Name2";
@@ -113,13 +177,46 @@ namespace RipBot.Modules
 			});
 			emb.AddField(x =>
 			{
-				x.IsInline = true;
+				x.IsInline = inline;
 				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
 				//x.Value = message.Content;
 				x.Name = "Name3";
 				x.Value = "Value3";
+			});
+			emb.AddField(x =>
+			{
+				x.IsInline = inline;
+				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
+				//x.Value = message.Content;
+				x.Name = "Name4";
+				x.Value = "Value4";
+			});
+			emb.AddField(x =>
+			{
+				x.IsInline = inline;
+				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
+				//x.Value = message.Content;
+				x.Name = "Name5";
+				x.Value = "Value5";
+			});
+			emb.AddField(x =>
+			{
+				x.IsInline = inline;
+				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
+				//x.Value = message.Content;
+				x.Name = "Name6";
+				x.Value = "Value6";
 			}
 			);
+
+			// Footer
+			EmbedFooterBuilder embfoot = new EmbedFooterBuilder();
+			embfoot.Text = "Footer";
+			emb.WithFooter(embfoot);
+
+
+
+
 			await ReplyAsync("", embed: emb);
 
 
@@ -141,7 +238,7 @@ namespace RipBot.Modules
 			////sb.AppendLine("----- | -----");
 			////sb.AppendLine("Cell1 | Cell2");
 
-			await ReplyAsync(sb.ToString());
+			//await ReplyAsync(sb.ToString());
 		}
 
 
