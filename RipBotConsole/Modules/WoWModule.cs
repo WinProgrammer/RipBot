@@ -426,7 +426,7 @@ namespace RipBot.Modules
 
 				try
 				{
-					currentplayer = explorer.GetCharacter(Globals.DEFAULTREALM, playernames[i], CharacterOptions.GetItems);
+					currentplayer = explorer.GetCharacter(Globals.DEFAULTREALM, playernames[i], CharacterOptions.GetEverything);
 					currentline += playernames[i] + " " + currentplayer.Items.AverageItemLevel + "/" + currentplayer.Items.AverageItemLevelEquipped + "\t" + "|\t";
 				}
 				catch (Exception ex)
