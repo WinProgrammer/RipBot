@@ -1185,7 +1185,7 @@ namespace RipBot.Modules
 						dr["LastModifiedReadable"].ToString()));
 
 					// can't send over 2k in a message
-					if (sb.Length > 1980)
+					if (sb.Length > 1900)
 					{
 						// send what we have
 						await ReplyAsync(sb.ToString());
