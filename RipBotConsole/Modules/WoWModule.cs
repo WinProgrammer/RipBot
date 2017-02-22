@@ -724,6 +724,70 @@ namespace RipBot.Modules
 
 
 
+		/// <summary>
+		/// Gets the profession totals for a guild from the cache.
+		/// </summary>
+		/// <param name="optionalguildname">The optional guild name to get the class totals for.</param>
+		/// <returns></returns>
+		[Command("getprofessiontotals"), Alias("gct")]
+		//[Remarks("Gets the profession totals for a guild.")]
+		[Remarks("Gets the professiontotals totals for a guild.\n")]
+		[Summary("EX: ripbot getprofessiontotals\nEX: ripbot getprofessiontotals Hordecorp\n")]
+		[MinPermissions(AccessLevel.User)]
+		public async Task ClassProfessionTotalsCmd([Remainder]string optionalguildname = null)
+		{
+			string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
+			//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
+
+
+
+			StringBuilder sb = new StringBuilder();
+			DataAccess da = new DataAccess();
+
+			if (!da.DoesGuildExist(guildname))
+			{
+				await ReplyAsync("Guild not found in database.");
+				da.Dispose();
+				da = null;
+				return;
+			}
+
+
+			int totalmembers = 0;
+			Hashtable TOTALS = da.GetProfessionTotals(guildname, out totalmembers);
+
+			EmbedBuilder embedclasses = new EmbedBuilder()
+			.WithAuthor(new EmbedAuthorBuilder()
+			.WithIconUrl(Context.Guild.IconUrl)
+			.WithName("get ProfessionTotals"))
+			.WithColor(new Color(0, 191, 255))
+			//.WithThumbnailUrl(Context.Guild.IconUrl)
+			.WithTitle("Gets the profession totals.")
+			.WithDescription("```\n" + String.Format("Profession totals for {0} who has {1} members.", guildname, totalmembers.ToString()) +
+				"\nThe UNKNOWN profession means that a player hasn't picked either a primary, secondary or both main professions" + "```")
+			;
+
+
+			var allkeys = TOTALS.Keys;
+			foreach (string currentprofession in allkeys)
+			{
+				embedclasses.AddField(x =>
+				{
+					x.IsInline = true;
+					x.Name = "__**" + currentprofession + "**__";
+					x.Value = TOTALS[currentprofession].ToString();
+				});
+			}
+
+			embedclasses.Build();
+
+			da.Dispose();
+			da = null;
+
+			await ReplyAsync("", embed: embedclasses);
+		}
+
+
 
 
 		/// <summary>
@@ -998,71 +1062,6 @@ namespace RipBot.Modules
 						x.IsInline = true;
 						x.Name = "__**" + currentclass + "**__";
 						x.Value = TOTALS[currentclass].ToString();
-					});
-				}
-
-				embedclasses.Build();
-
-				da.Dispose();
-				da = null;
-
-				await ReplyAsync("", embed: embedclasses);
-			}
-
-
-
-			/// <summary>
-			/// Gets the profession totals for a guild from the cache.
-			/// </summary>
-			/// <param name="optionalguildname">The optional guild name to get the class totals for.</param>
-			/// <returns></returns>
-			[Command("professiontotals"), Alias("gct")]
-			//[Remarks("Gets the profession totals for a guild.")]
-			[Remarks("Gets the professiontotals totals for a guild.\n")]
-			[Summary("EX: ripbot get professiontotals\nEX: ripbot get professiontotals Hordecorp\n")]
-			[MinPermissions(AccessLevel.User)]
-			public async Task ClassProfessionTotalsCmd([Remainder]string optionalguildname = null)
-			{
-				string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
-				//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
-
-
-
-				StringBuilder sb = new StringBuilder();
-				DataAccess da = new DataAccess();
-
-				if (!da.DoesGuildExist(guildname))
-				{
-					await ReplyAsync("Guild not found in database.");
-					da.Dispose();
-					da = null;
-					return;
-				}
-
-
-				int totalmembers = 0;
-				Hashtable TOTALS = da.GetProfessionTotals(guildname, out totalmembers);
-
-				EmbedBuilder embedclasses = new EmbedBuilder()
-				.WithAuthor(new EmbedAuthorBuilder()
-				.WithIconUrl(Context.Guild.IconUrl)
-				.WithName("get ProfessionTotals"))
-				.WithColor(new Color(0, 191, 255))
-				//.WithThumbnailUrl(Context.Guild.IconUrl)
-				.WithTitle("Gets the profession totals.")
-				.WithDescription("```\n" + String.Format("Profession totals for {0} who has {1} members.", guildname, totalmembers.ToString()) +
-					"\nThe UNKNOWN profession means that a player hasn't picked either a primary, secondary or both main professions" + "```")
-				;
-
-
-				var allkeys = TOTALS.Keys;
-				foreach (string currentprofession in allkeys)
-				{
-					embedclasses.AddField(x =>
-					{
-						x.IsInline = true;
-						x.Name = "__**" + currentprofession + "**__";
-						x.Value = TOTALS[currentprofession].ToString();
 					});
 				}
 
