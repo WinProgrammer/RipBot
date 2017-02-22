@@ -963,6 +963,7 @@ namespace RipBot.Modules
 				//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
 
 
+
 				StringBuilder sb = new StringBuilder();
 				DataAccess da = new DataAccess();
 
@@ -978,21 +979,34 @@ namespace RipBot.Modules
 				int totalmembers = 0;
 				Hashtable TOTALS = da.GetClassTotals(guildname, out totalmembers);
 
-
-				sb.AppendLine(String.Format("Class totals for {0} who has {1} members.", guildname, totalmembers.ToString()));
-				sb.AppendLine();
+				EmbedBuilder embedclasses = new EmbedBuilder()
+				.WithAuthor(new EmbedAuthorBuilder()
+				.WithIconUrl(Context.Guild.IconUrl)
+				.WithName("get ClassTotals"))
+				.WithColor(new Color(0, 191, 255))
+				//.WithThumbnailUrl(Context.Guild.IconUrl)
+				.WithTitle("Gets the class totals.")
+				.WithDescription("```\n" + String.Format("Class totals for {0} who has {1} members.", guildname, totalmembers.ToString()) + "```")
+				;
 
 
 				var allkeys = TOTALS.Keys;
 				foreach (string currentclass in allkeys)
 				{
-					sb.AppendLine(String.Format("{0} = {1}",
-						currentclass,
-						TOTALS[currentclass]));
+					embedclasses.AddField(x =>
+					{
+						x.IsInline = true;
+						x.Name = "__**" + currentclass + "**__";
+						x.Value = TOTALS[currentclass].ToString();
+					});
 				}
 
+				embedclasses.Build();
 
-				await ReplyAsync(sb.ToString());
+				da.Dispose();
+				da = null;
+
+				await ReplyAsync("", embed: embedclasses);
 			}
 
 
@@ -1013,6 +1027,7 @@ namespace RipBot.Modules
 				//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
 
 
+
 				StringBuilder sb = new StringBuilder();
 				DataAccess da = new DataAccess();
 
@@ -1028,21 +1043,35 @@ namespace RipBot.Modules
 				int totalmembers = 0;
 				Hashtable TOTALS = da.GetProfessionTotals(guildname, out totalmembers);
 
-
-				sb.AppendLine(String.Format("Profession totals for {0} who has {1} members.", guildname, totalmembers.ToString()));
-				sb.AppendLine();
+				EmbedBuilder embedclasses = new EmbedBuilder()
+				.WithAuthor(new EmbedAuthorBuilder()
+				.WithIconUrl(Context.Guild.IconUrl)
+				.WithName("get ProfessionTotals"))
+				.WithColor(new Color(0, 191, 255))
+				//.WithThumbnailUrl(Context.Guild.IconUrl)
+				.WithTitle("Gets the profession totals.")
+				.WithDescription("```\n" + String.Format("Profession totals for {0} who has {1} members.", guildname, totalmembers.ToString()) +
+					"\nThe UNKNOWN profession means that a player hasn't picked either a primary, secondary or both main professions" + "```")
+				;
 
 
 				var allkeys = TOTALS.Keys;
 				foreach (string currentprofession in allkeys)
 				{
-					sb.AppendLine(String.Format("{0} = {1}",
-						currentprofession,
-						TOTALS[currentprofession]));
+					embedclasses.AddField(x =>
+					{
+						x.IsInline = true;
+						x.Name = "__**" + currentprofession + "**__";
+						x.Value = TOTALS[currentprofession].ToString();
+					});
 				}
 
+				embedclasses.Build();
 
-				await ReplyAsync(sb.ToString());
+				da.Dispose();
+				da = null;
+
+				await ReplyAsync("", embed: embedclasses);
 			}
 
 
