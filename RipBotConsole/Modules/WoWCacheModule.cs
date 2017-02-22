@@ -37,22 +37,48 @@ namespace RipBot.Modules
 		/// <summary>
 		/// Updates the GUILD table.
 		/// </summary>
-		/// <param name="level">The level of the players to update. We do it this way instead of all at once to avoid being Rate Limited.</param>
+		/// <param name="level">The level(s) of the players to update. We do it this way instead of all at once to avoid being Rate Limited.</param>
 		/// <param name="optionalguildname"></param>
 		/// <returns></returns>
 		[Command("updateguildcache"), Alias("ugc")]
-		[Remarks("Updates the GUILD table.\n")]
-		[Summary("EX: ripbot updateguildcache 110\nEX: ripbot updateguildcache 110 Hordecorp")]
+		[Remarks("Updates the GUILD and PLAYERS tables in the cache.\n")]
+		[Summary("EX: ripbot updateguildcache 110\nEX: ripbot updateguildcache 110 Hordecorp\nEX: ripbot updateguildcache 40-50")]
 		[MinPermissions(AccessLevel.ServerAdmin)]
 		public async Task UpdateGuildCacheCmd(string level, [Remainder]string optionalguildname = null)
 		{
 			string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
 
-			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
-			Character player = null;
 			StringBuilder sb = new StringBuilder();
 
-			sb.AppendLine("Attempting to update " + guildname + "  (" + DateTime.Now.ToString() + ")");
+			// check if the level passed is a range
+			string lowerrange = "";
+			string upperrange = "";
+			if (level.Contains("-"))
+			{
+				// it does so parse the lower upper level range
+				string[] ranges = level.Split('-');
+				lowerrange = ranges[0].Trim();
+				upperrange = ranges[1].Trim();
+			}
+			// make sure the range isn't over level 100
+			if (int.Parse(lowerrange) > 100 || int.Parse(upperrange) > 100)
+			{
+				sb.AppendLine("Level ranges cannot exceed level 100.\nLevels 101 thru 110 must be run individually.");
+				await ReplyAsync(sb.ToString());
+				return;
+			}
+			// make sure the range isn't over 100
+			if (int.Parse(upperrange) - int.Parse(lowerrange) > 10)
+			{
+				sb.AppendLine("Level ranges cannot exceed 10 levels at once.\nEX: ripbot updateguildcache 50-60 is ok.\nEX: ripbot updateguildcache 50-61 is NOT ok.");
+				await ReplyAsync(sb.ToString());
+				return;
+			}
+
+			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
+			Character player = null;
+
+			sb.AppendLine("Attempting to update level " + level + " members of " + guildname + "  (" + DateTime.Now.ToString() + ")");
 			await ReplyAsync(sb.ToString());
 
 			DataAccess da = new DataAccess();
@@ -85,35 +111,35 @@ namespace RipBot.Modules
 			}
 
 
-			int numofplayers =0;
+			int numofplayers = 0;
 			int numofupdatedplayers = 0;
 
 
 			// Get the list of playernames in a guild from the cache who have a matching lvl
-			DataTable matchingplayers = da.GetTable("SELECT PlayerName FROM PLAYERS WHERE Level = " + level + " AND GuildName = '" + guildname + "'", "Matches");
-			if (matchingplayers != null & matchingplayers.Rows.Count > 0)
+			string sql = "SELECT PlayerName FROM PLAYERS WHERE Level = " + level + " AND GuildName = '" + guildname + "'";
+			if (!string.IsNullOrEmpty(lowerrange) && !string.IsNullOrEmpty(upperrange))
 			{
-				numofplayers = matchingplayers.Rows.Count;
+				sql = "SELECT PlayerName FROM PLAYERS WHERE Level >= " + lowerrange + " AND Level <= " + upperrange + " AND GuildName = '" + guildname + "'";
+			}
+
+			DataTable matchingplayersfromcache = da.GetTable(sql, "Matches");
+			if (matchingplayersfromcache != null & matchingplayersfromcache.Rows.Count > 0)
+			{
+				numofplayers = matchingplayersfromcache.Rows.Count;
 				numofupdatedplayers = 0;
 
 
 				// loop through them
-				foreach (DataRow dr in matchingplayers.Rows)
+				foreach (DataRow dr in matchingplayersfromcache.Rows)
 				{
-					//Character player = explorer.GetCharacter("aerie peak", txtPlayerName.Text, CharacterOptions.GetEverything);
 					try
 					{
-						//player = explorer.GetCharacter("aerie peak", txtPlayerName.Text, CharacterOptions.GetItems | CharacterOptions.GetStats | CharacterOptions.GetAchievements);
-						//player = explorer.GetCharacter("aerie peak", txtPlayerName.Text, CharacterOptions.GetEverything);
-						//player = explorer.GetCharacter(Utility.EncloseInQuotes(txtRealm.Text.ToLower()), txtPlayerName.Text, CharacterOptions.GetEverything);
 						player = explorer.GetCharacter(Globals.DEFAULTREALM, dr["PlayerName"].ToString(), CharacterOptions.GetEverything);
 					}
 					catch (Exception ex)
 					{
 						Console.WriteLine(ex.Message);
 						sb.AppendLine("Player " + dr["PlayerName"].ToString() + " not found.\nREASON: " + ex.Message + "\n");
-						//await ReplyAsync("Player " + dr["PlayerName"].ToString() + " not found.\r\n");
-						//Application.DoEvents();
 						continue;
 					}
 
@@ -131,31 +157,26 @@ namespace RipBot.Modules
 					if (ret)
 					{
 						numofupdatedplayers++;
-						//txtResults.Text += "Player " + dr["PlayerName"].ToString() + " updated.\r\n";
 					}
 					else
 					{
+						Console.WriteLine("");
 						sb.AppendLine("Player " + dr["PlayerName"].ToString() + " not updated.");
-						//await ReplyAsync("Player " + dr["PlayerName"].ToString() + " not updated.\r\n");
-						//txtResults.Text += "Player " + dr["PlayerName"].ToString() + " not updated.\r\n";
 						continue;
 					}
 
-					//Application.DoEvents();
 					//Thread.Sleep(2000);
 				}
-
 			}
 			else
 			{
 				sb.AppendLine("There aren't any level " + level.ToString() + " players in the guild.  (" + DateTime.Now.ToString() + ")\n");
-				//await ReplyAsync("There aren't any level " + level.ToString() + " players in the guild.\r\n");
 			}
 
 
 
 
-			matchingplayers = null;
+			matchingplayersfromcache = null;
 			da.Dispose();
 			da = null;
 			player = null;
