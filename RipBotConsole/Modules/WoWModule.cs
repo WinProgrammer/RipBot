@@ -410,12 +410,11 @@ namespace RipBot.Modules
 		public async Task CompareGearCmd(params string[] playernames)
 		{
 			StringBuilder sb = new StringBuilder();
-			string currentline = "";
 			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
 
 
 			Hashtable[] players = new Hashtable[playernames.Length];
-			currentline = "Gear\t";
+			string ilvlsforembed = "";
 			DataAccess da = new DataAccess();
 			bool ret = false;
 
@@ -427,7 +426,7 @@ namespace RipBot.Modules
 				try
 				{
 					currentplayer = explorer.GetCharacter(Globals.DEFAULTREALM, playernames[i], CharacterOptions.GetEverything);
-					currentline += playernames[i] + " " + currentplayer.Items.AverageItemLevel + "/" + currentplayer.Items.AverageItemLevelEquipped + "\t" + "|\t";
+					ilvlsforembed += playernames[i] + " " + currentplayer.Items.AverageItemLevel + "/" + currentplayer.Items.AverageItemLevelEquipped + " -- ";
 				}
 				catch (Exception ex)
 				{
@@ -436,7 +435,6 @@ namespace RipBot.Modules
 
 					if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 					{
-						//sb.AppendLine("Blizzard API service is down.");
 						sb.AppendLine(ex.Message + "\n");
 					}
 
@@ -468,7 +466,6 @@ namespace RipBot.Modules
 						Console.WriteLine(ex.ToString());
 						if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
 						{
-							//sb.AppendLine("Blizzard API service is down.");
 							sb.AppendLine(ex.Message + "\n");
 						}
 
@@ -480,103 +477,144 @@ namespace RipBot.Modules
 						sb.AppendLine("Player " + playernames[i] + " not found or could not be updated.");
 						await ReplyAsync(sb.ToString());
 						continue;
-						//return;
 					}
 				}
-
-				//// if they exist then use cache
-				//DataRow dr = da.GetPlayer(playernames[i]);
-				//currentline += dr["PlayerName"].ToString() + " " + dr["AverageItemLevel"].ToString() + "/" + dr["AverageItemLevelEquipped"] + "\t" + "|\t";
 			}
 
-
-			sb.AppendLine(currentline);
+			ilvlsforembed = ilvlsforembed.Substring(0, ilvlsforembed.Length - 4);
 			sb.AppendLine();
 
 
 
 			#region build each string
 
-			currentline = BuildLine("BACK", players);
-			sb.AppendLine(currentline);
+			// get the playernames to use in our embed Description
+			string playersdescrip = "";
+			for (int i = 0; i < playernames.Length; i++)
+			{
+				playersdescrip += playernames[i] + " ";
+			}
 
-			currentline = BuildLine("CHEST", players);
-			sb.AppendLine(currentline);
+			EmbedBuilder embedgear = new EmbedBuilder()
+				.WithAuthor(new EmbedAuthorBuilder()
+				.WithIconUrl(Context.Guild.IconUrl)
+				.WithName("CompareGear"))
+				.WithColor(new Color(0, 191, 255))
+				//.WithThumbnailUrl(Context.Guild.IconUrl)
+				.WithTitle("Compare the gear of multiple players.")
+				//.WithDescription("```\nripbot comparegear " + playersdescrip + "```")
+				.WithDescription("```\n" + ilvlsforembed + "```")
+				;
 
-			currentline = BuildLine("FEET", players);
-			sb.AppendLine(currentline);
 
-			currentline = BuildLine("FINGER1", players);
-			sb.AppendLine(currentline);
+			bool buildembedok = false;
 
-			currentline = BuildLine("FINGER2", players);
-			sb.AppendLine(currentline);
 
-			currentline = BuildLine("HANDS", players);
-			sb.AppendLine(currentline);
+			buildembedok = BuildGearEmbed("HEAD", players, ref embedgear);
+			buildembedok = BuildGearEmbed("HANDS", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Neck", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Waist", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Shoulder", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Legs", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Back", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Feet", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Chest", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Finger1", players, ref embedgear);
+			buildembedok = BuildGearEmbed("RANGED", players, ref embedgear);
+			//buildembedok = BuildGearEmbed("SHIRT", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Finger2", players, ref embedgear);
+			buildembedok = BuildGearEmbed("TABARD", players, ref embedgear);
+			buildembedok = BuildGearEmbed("TRINKET1", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Wrist", players, ref embedgear);
+			buildembedok = BuildGearEmbed("Trinket2", players, ref embedgear);
+			buildembedok = BuildGearEmbed("MAINHAND", players, ref embedgear);
+			buildembedok = BuildGearEmbed("OFFHAND", players, ref embedgear);
 
-			currentline = BuildLine("HEAD", players);
-			sb.AppendLine(currentline);
 
-			currentline = BuildLine("LEGS", players);
-			sb.AppendLine(currentline);
-
-			currentline = BuildLine("MAINHAND", players);
-			sb.AppendLine(currentline);
-
-			currentline = BuildLine("NECK", players);
-			sb.AppendLine(currentline);
-
-			currentline = BuildLine("OFFHAND", players);
-			sb.AppendLine(currentline);
-
-			currentline = BuildLine("RANGED", players);
-			sb.AppendLine(currentline);
-
-			//currentline = BuildLine("SHIRT", players);
-			//sb.AppendLine(currentline);
-
-			currentline = BuildLine("SHOULDER", players);
-			sb.AppendLine(currentline);
-
-			//currentline = BuildLine("TABARD", players);
-			//sb.AppendLine(currentline);
-
-			currentline = BuildLine("TRINKET1", players);
-			sb.AppendLine(currentline);
-
-			currentline = BuildLine("TRINKET2", players);
-			sb.AppendLine(currentline);
-
-			currentline = BuildLine("WAIST", players);
-			sb.AppendLine(currentline);
-
-			currentline = BuildLine("WRIST", players);
-			sb.AppendLine(currentline);
+			embedgear.Build();
 
 			#endregion
 
 
 			explorer = null;
 
-			await ReplyAsync(sb.ToString());
+			sb.AppendLine();
+			sb.AppendLine();
+
+			await ReplyAsync("", embed: embedgear);
 		}
 
 		private string BuildLine(string itemname, Hashtable[] players)
 		{
+			itemname = itemname.ToUpper();
+
 			string tmp = "";
-			//tmp = itemname.PadRight(8) + "\t";
-			//tmp = itemname + "\t\t";
 			tmp = itemname.PadRight(12);
-			foreach (Hashtable h in players)
+			try
 			{
-				tmp += h[itemname].ToString() + "\t";
-				//tmp += h[itemname].ToString() + "  ";
+				foreach (Hashtable h in players)
+				{
+					tmp += h[itemname].ToString() + "\t";
+				}
 			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+			}
+
 			return tmp;
 		}
 
 
+		private bool BuildGearEmbed(string itemname, Hashtable[] players, ref EmbedBuilder emb)
+		{
+			itemname = itemname.ToUpper();
+
+			string embvalue = "";
+
+			string tmp = "";
+
+			try
+			{
+				foreach (Hashtable h in players)
+				{
+					try
+					{
+						tmp += h[itemname].ToString() + " -- ";
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine(ex.Message);
+						return false;
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+				return false;
+			}
+
+			// remove the trailing " -- "
+			embvalue = tmp.Substring(0, tmp.Length - 4);
+
+			try
+			{
+				emb.AddField(x =>
+				{
+					x.IsInline = true;
+					x.Name = itemname;
+					x.Value = embvalue;
+				});
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine(ex.Message);
+				return false;
+			}
+
+			return true;
+		}
 
 
 

@@ -94,6 +94,7 @@ namespace RipBot.Modules
 					.WithImageUrl(guild.IconUrl)
 				.WithColor(new Color(0, 191, 255))
 				;
+			embed.Build();
 
 			await ReplyAsync("", embed: embed);
 		}
@@ -214,7 +215,7 @@ namespace RipBot.Modules
 			embfoot.Text = "Footer";
 			emb.WithFooter(embfoot);
 
-
+			emb.Build();
 
 
 			await ReplyAsync("", embed: emb);
