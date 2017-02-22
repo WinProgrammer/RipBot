@@ -576,6 +576,51 @@ namespace RipBot
 
 
 		/// <summary>
+		/// Gets the total for each profession in a guild.
+		/// </summary>
+		/// <param name="guildname">The guild to check.</param>
+		/// <param name="totalmembers">(out) the total number of players in the guild.</param>
+		/// <returns></returns>
+		public Hashtable GetProfessionTotals(string guildname, out int totalmembers)
+		{
+			string tm = GetFieldValue("SELECT COUNT(PlayerName) FROM PLAYERS WHERE GuildName = '" + guildname + "'");
+			totalmembers = int.Parse(tm);
+
+			Hashtable TOTALS = new Hashtable();
+
+			// SELECT COUNT(PlayerName) FROM PLAYERS WHERE Guildname = 'Hordecorp' AND (Profession1 = 'Tailoring' OR Profession2 = 'Tailoring')
+			string baseqry = "SELECT COUNT(PlayerName) FROM PLAYERS WHERE Guildname = '" + guildname + "' AND (Profession1 = '{0}' OR Profession2 = '{0}')";
+			string qry = "";
+
+			qry = string.Format(baseqry, "Alchemy");
+			TOTALS.Add("Alchemy", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Blacksmithing");
+			TOTALS.Add("Blacksmithing", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Enchanting");
+			TOTALS.Add("Enchanting", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Engineering");
+			TOTALS.Add("Engineering", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Herbalism");
+			TOTALS.Add("Herbalism", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Inscription");
+			TOTALS.Add("Inscription", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Jewelcrafting");
+			TOTALS.Add("Jewelcrafting", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Leatherworking");
+			TOTALS.Add("Leatherworking", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Mining");
+			TOTALS.Add("Mining", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Skinning");
+			TOTALS.Add("Skinning", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "Tailoring");
+			TOTALS.Add("Tailoring", int.Parse(GetFieldValue(qry)));
+			qry = string.Format(baseqry, "UNKNOWN");
+			TOTALS.Add("UNKNOWN", int.Parse(GetFieldValue(qry)));
+
+			return TOTALS;
+		}
+
+		/// <summary>
 		/// Gets all the level 110+ players who have equal or greater ilvl's than the argument.
 		/// </summary>
 		/// <param name="guildname">The guild to check.</param>

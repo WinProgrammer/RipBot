@@ -953,7 +953,7 @@ namespace RipBot.Modules
 			/// <param name="optionalguildname">The optional guild name to get the class totals for.</param>
 			/// <returns></returns>
 			[Command("classtotals"), Alias("gct")]
-			//[Remarks("Gets the class totals for a guild. \n__*Any guild name with spaces must be enclosed in quotes*__")]
+			//[Remarks("Gets the class totals for a guild.")]
 			[Remarks("Gets the class totals for a guild.\n")]
 			[Summary("EX: ripbot get classtotals\nEX: ripbot get classtotals Hordecorp\n")]
 			[MinPermissions(AccessLevel.User)]
@@ -975,8 +975,6 @@ namespace RipBot.Modules
 				}
 
 
-
-
 				int totalmembers = 0;
 				Hashtable TOTALS = da.GetClassTotals(guildname, out totalmembers);
 
@@ -996,6 +994,57 @@ namespace RipBot.Modules
 
 				await ReplyAsync(sb.ToString());
 			}
+
+
+
+			/// <summary>
+			/// Gets the profession totals for a guild from the cache.
+			/// </summary>
+			/// <param name="optionalguildname">The optional guild name to get the class totals for.</param>
+			/// <returns></returns>
+			[Command("professiontotals"), Alias("gct")]
+			//[Remarks("Gets the profession totals for a guild.")]
+			[Remarks("Gets the professiontotals totals for a guild.\n")]
+			[Summary("EX: ripbot get professiontotals\nEX: ripbot get professiontotals Hordecorp\n")]
+			[MinPermissions(AccessLevel.User)]
+			public async Task ClassProfessionTotalsCmd([Remainder]string optionalguildname = null)
+			{
+				string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
+				//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
+
+
+				StringBuilder sb = new StringBuilder();
+				DataAccess da = new DataAccess();
+
+				if (!da.DoesGuildExist(guildname))
+				{
+					await ReplyAsync("Guild not found in database.");
+					da.Dispose();
+					da = null;
+					return;
+				}
+
+
+				int totalmembers = 0;
+				Hashtable TOTALS = da.GetProfessionTotals(guildname, out totalmembers);
+
+
+				sb.AppendLine(String.Format("Profession totals for {0} who has {1} members.", guildname, totalmembers.ToString()));
+				sb.AppendLine();
+
+
+				var allkeys = TOTALS.Keys;
+				foreach (string currentprofession in allkeys)
+				{
+					sb.AppendLine(String.Format("{0} = {1}",
+						currentprofession,
+						TOTALS[currentprofession]));
+				}
+
+
+				await ReplyAsync(sb.ToString());
+			}
+
 
 
 
