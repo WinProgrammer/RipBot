@@ -410,22 +410,107 @@ namespace RipBot
 
 
 		/// <summary>
-		/// (HORDECORP SPECIFIC) Gets a list of all the high council members from the database.
+		/// (HORDECORP SPECIFIC) Gets a list of all the GM members from the database.
 		/// </summary>
-		/// <returns>A list of Hordecorp high council members.</returns>
-		public List<string> GetHighCouncilMembers()
+		/// <returns>A list of Hordecorp GM members.</returns>
+		public List<string> GetHordecorpGM()
 		{
-			List<string> hc = new List<string>();
-
-			DataTable dt = GetTable("SELECT PlayerName FROM PLAYERS WHERE GuildRank = '2' AND GuildName = 'Hordecorp'", "HighCouncil");
-
-			foreach (DataRow dr in dt.Rows)
-			{
-				hc.Add(dr["PlayerName"].ToString());
-			}
+			DataTable dt = GetTable("SELECT PlayerName, LastModified FROM PLAYERS WHERE GuildRank = '0' AND GuildName = 'Hordecorp'", "GM");
+			List<string> hc = BuildOfficerList(dt);
+			dt.Dispose();
+			dt = null;
 
 			return hc;
 		}
+
+		/// <summary>
+		/// (HORDECORP SPECIFIC) Gets a list of all the VP members from the database.
+		/// </summary>
+		/// <returns>A list of Hordecorp VP members.</returns>
+		public List<string> GetHordecorpVPs()
+		{
+			DataTable dt = GetTable("SELECT PlayerName, LastModified FROM PLAYERS WHERE GuildRank = '1' AND GuildName = 'Hordecorp'", "VP");
+			List<string> hc = BuildOfficerList(dt);
+			dt.Dispose();
+			dt = null;
+
+			return hc;
+		}
+
+		/// <summary>
+		/// (HORDECORP SPECIFIC) Gets a list of all the high council members from the database.
+		/// </summary>
+		/// <returns>A list of Hordecorp high council members.</returns>
+		public List<string> GetHordecorpHighCouncil()
+		{
+			DataTable dt = GetTable("SELECT PlayerName, LastModified FROM PLAYERS WHERE GuildRank = '2' AND GuildName = 'Hordecorp'", "HighCouncil");
+			List<string> hc = BuildOfficerList(dt);
+			dt.Dispose();
+			dt = null;
+
+			return hc;
+		}
+
+		/// <summary>
+		/// (HORDECORP SPECIFIC) Gets a list of all the BigWig members from the database.
+		/// </summary>
+		/// <returns>A list of Hordecorp BigWig members.</returns>
+		public List<string> GetHordecorpBigWigs()
+		{
+			DataTable dt = GetTable("SELECT PlayerName, LastModified FROM PLAYERS WHERE GuildRank = '3' AND GuildName = 'Hordecorp'", "BigWig");
+			List<string> hc = BuildOfficerList(dt);
+			dt.Dispose();
+			dt = null;
+
+			return hc;
+		}
+
+		/// <summary>
+		/// (HORDECORP SPECIFIC) Gets a list of all the Corporate members from the database.
+		/// </summary>
+		/// <returns>A list of Hordecorp Corporate members.</returns>
+		public List<string> GetHordecorpCorporate()
+		{
+			DataTable dt = GetTable("SELECT PlayerName, LastModified FROM PLAYERS WHERE GuildRank = '4' AND GuildName = 'Hordecorp'", "Corporate");
+			List<string> hc = BuildOfficerList(dt);
+			dt.Dispose();
+			dt = null;
+
+			return hc;
+		}
+
+		private List<string> BuildOfficerList(DataTable dt)
+		{
+			DateTime now = DateTime.Now;
+			// get todays unix time
+			long today = Utility.ConvertLocalTimeToUnix(now);
+			// subtract 90 days from now
+			TimeSpan ts = new TimeSpan(90, 0, 0, 0);
+			DateTime prev = now.Subtract(ts);
+			// convert that date to unix time
+			long span = Utility.ConvertLocalTimeToUnix(prev);
+
+
+			List<string> officers = new List<string>();
+
+			long lastmodified = 0;
+			foreach (DataRow dr in dt.Rows)
+			{
+				lastmodified = long.Parse(dr["LastModified"].ToString());
+				if (lastmodified <= span & lastmodified != 0)
+				{
+					// inactive
+					officers.Add("**" + dr["PlayerName"].ToString() + "**");
+				}
+				else
+				{
+					officers.Add(dr["PlayerName"].ToString());
+				}
+			}
+
+			return officers;
+		}
+
 
 
 		/// <summary>

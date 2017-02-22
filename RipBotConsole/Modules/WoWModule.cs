@@ -57,7 +57,7 @@ namespace RipBot.Modules
 		{
 			StringBuilder sb = new StringBuilder();
 			DataAccess da = new DataAccess();
-			List<string> hc = da.GetHighCouncilMembers();
+			List<string> hc = da.GetHordecorpHighCouncil();
 			da.Dispose();
 			da = null;
 
@@ -70,6 +70,112 @@ namespace RipBot.Modules
 
 
 			await ReplyAsync(sb.ToString());
+		}
+
+
+		/// <summary>
+		/// Display all Hordecorp officers.\nThis command ONLY works for Hordecorp.
+		/// </summary>
+		/// <returns></returns>
+		[Command("whoareofficers"), Alias("wao")]
+		[Remarks("Display all Hordecorp Officers.\nThis command ONLY works for Hordecorp.\n")]
+		[Summary("EX: ripbot whoareofficers\n")]
+		[MinPermissions(AccessLevel.User)]
+		public async Task WhoAreOfficersCmd()
+		{
+			StringBuilder sb = new StringBuilder();
+			DataAccess da = new DataAccess();
+			string working = "";
+
+
+			EmbedBuilder embedofficers = new EmbedBuilder()
+				.WithAuthor(new EmbedAuthorBuilder()
+				.WithIconUrl(Context.Guild.IconUrl)
+				.WithName("WhoAreOfficers"))
+				.WithColor(new Color(0, 191, 255))
+				//.WithThumbnailUrl(Context.Guild.IconUrl)
+				.WithTitle("Gets a list of Hordecorp officers. (GM - Corporate)")
+				//.WithDescription("```\nripbot comparegear " + playersdescrip + "```")
+				.WithDescription("```\n" + "Players in **Bold** haven't been seen in the last 90 days." + "```")
+				;
+
+
+			List<string> gm = da.GetHordecorpGM();
+			gm.Sort();
+			working = BuildOfficerLine(gm);
+			embedofficers.AddField(x =>
+			{
+				x.IsInline = true;
+				x.Name = "__**GM**__";
+				x.Value = working;
+			});
+
+
+			List<string> vp = da.GetHordecorpVPs();
+			vp.Sort();
+			working = BuildOfficerLine(vp);
+			embedofficers.AddField(x =>
+			{
+				x.IsInline = true;
+				x.Name = "__**VP**__";
+				x.Value = working;
+			});
+
+
+			List<string> hc = da.GetHordecorpHighCouncil();
+			hc.Sort();
+			working = BuildOfficerLine(hc);
+			embedofficers.AddField(x =>
+			{
+				x.IsInline = true;
+				x.Name = "__**High Council**__";
+				x.Value = working;
+			});
+
+
+			List<string> bw = da.GetHordecorpBigWigs();
+			bw.Sort();
+			working = BuildOfficerLine(bw);
+			embedofficers.AddField(x =>
+			{
+				x.IsInline = true;
+				x.Name = "__**Big Wig**__";
+				x.Value = working;
+			});
+
+
+			List<string> cp = da.GetHordecorpCorporate();
+			cp.Sort();
+			working = BuildOfficerLine(cp);
+			embedofficers.AddField(x =>
+			{
+				x.IsInline = true;
+				x.Name = "__**Corporate**__";
+				x.Value = working;
+			});
+
+
+
+			embedofficers.Build();
+
+			da.Dispose();
+			da = null;
+
+			await ReplyAsync("", embed: embedofficers);
+		}
+
+		private string BuildOfficerLine(List<string> members)
+		{
+			string working = "";
+			foreach (string player in members)
+			{
+				working += player + " -- ";
+			}
+
+			// remove the trailing " -- "
+			working = working.Substring(0, working.Length - 4);
+
+			return working;
 		}
 
 
