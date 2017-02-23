@@ -36,7 +36,7 @@ namespace RipBot.Modules
 
 
 		/// <summary>
-		/// Updates the GUILD table.
+		/// Updates the GUILD and PLAYERS table.
 		/// </summary>
 		/// <param name="level">The level(s) of the players to update. We do it this way instead of all at once to avoid being Rate Limited.</param>
 		/// <param name="optionalguildname"></param>
@@ -82,8 +82,12 @@ namespace RipBot.Modules
 			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
 			Character player = null;
 
+			if (level == "110")
+				await ReplyAsync("Updating level 110 players can take upwards of 5-10 minutes because of the amount we have. Be patient.\n");
+
 			sb.AppendLine("Attempting to update level " + level + " members of " + guildname + "  (" + DateTime.Now.ToString() + ")");
 			await ReplyAsync(sb.ToString());
+			sb.Clear();
 
 			DataAccess da = new DataAccess();
 
@@ -117,6 +121,9 @@ namespace RipBot.Modules
 
 			int numofplayers = 0;
 			int numofupdatedplayers = 0;
+			List<string> insertedplayers = new List<string>();
+			List<string> updatedplayers = new List<string>();
+			List<string> failedplayers = new List<string>();
 
 
 			// Get the list of playernames in a guild from the cache who have a matching lvl
@@ -142,24 +149,31 @@ namespace RipBot.Modules
 					}
 					catch (Exception ex)
 					{
+						failedplayers.Add(dr["PlayerName"].ToString());
+
 						Console.WriteLine(ex.Message);
 						sb.AppendLine("Player " + dr["PlayerName"].ToString() + " not found.\nREASON: " + ex.Message + "\n");
 						continue;
 					}
 
-
-					// upsert the player
+					// upsert the player and capture the inserts/updates
 					try
 					{
 						result = da.UpdatePlayer(player);
 						switch (result)
 						{
 							case DataAccess.UpsertResult.INSERTED:
-								sb.AppendLine(player.Name + " was added to cache.");
+								//sb.AppendLine(player.Name + " was added to cache.");
+								insertedplayers.Add(player.Name);
 								break;
 
 							case DataAccess.UpsertResult.UPDATED:
-								sb.AppendLine(player.Name + " was updated in the cache.");
+								//sb.AppendLine(player.Name + " was updated in the cache.");
+								updatedplayers.Add(player.Name);
+								break;
+
+							case DataAccess.UpsertResult.ERROR:
+								failedplayers.Add(player.Name);
 								break;
 
 							default:
@@ -168,7 +182,9 @@ namespace RipBot.Modules
 					}
 					catch (Exception exx)
 					{
+						failedplayers.Add(player.Name);
 						Console.WriteLine(exx.Message);
+						await ReplyAsync("\nERROR:\n" + exx.ToString() + "\n");
 					}
 					if (result != DataAccess.UpsertResult.ERROR)
 					{
@@ -178,6 +194,7 @@ namespace RipBot.Modules
 					{
 						Console.WriteLine("");
 						sb.AppendLine("Player " + dr["PlayerName"].ToString() + " not updated.");
+						failedplayers.Add(player.Name);
 						continue;
 					}
 
@@ -187,17 +204,90 @@ namespace RipBot.Modules
 			else
 			{
 				sb.AppendLine("There aren't any level " + level.ToString() + " players in the guild.  (" + DateTime.Now.ToString() + ")\n");
+				//insertedplayers.Add("NONE");
+				//updatedplayers.Add("NONE");
+				//failedplayers.Add("NONE");
 			}
-
-
-
 
 			matchingplayersfromcache = null;
 			da.Dispose();
 			da = null;
 			player = null;
 
-			await ReplyAsync(sb.ToString() + "\n");
+			#region build our output
+
+			EmbedBuilder embugc = Utility.GetBuilder(withname: "UpdateGuildCache", withtitle: "Updates the guild and player cache with the specified level players.",
+				withdescription: "```\n" + "The following players have been added/updated in the " + guildname + " cache." + "```", withiconurl: Context.Guild.IconUrl);
+
+			string tmpinsertedplayers = "";
+			foreach (string insertedplayer in insertedplayers)
+			{
+				tmpinsertedplayers += insertedplayer + " -- ";
+			}
+
+			// remove the trailing " -- " if it exist
+			if (!string.IsNullOrEmpty(tmpinsertedplayers))
+				tmpinsertedplayers = tmpinsertedplayers.Substring(0, tmpinsertedplayers.Length - 4);
+			else
+				tmpinsertedplayers = "NONE";
+
+			embugc.AddField(x =>
+			{
+				x.IsInline = false;
+				x.Name = "__**Added " + insertedplayers.Count.ToString() + " Players**__";
+				x.Value = tmpinsertedplayers;
+			});
+
+
+			string tmpupdatedplayers = "";
+			foreach (string updatedplayer in updatedplayers)
+			{
+				tmpupdatedplayers += updatedplayer + " -- ";
+			}
+
+			// remove the trailing " -- " if it exist
+			if (!string.IsNullOrEmpty(tmpupdatedplayers))
+				tmpupdatedplayers = tmpupdatedplayers.Substring(0, tmpupdatedplayers.Length - 4);
+			else
+				tmpupdatedplayers = "NONE";
+
+			embugc.AddField(x =>
+			{
+				x.IsInline = false;
+				x.Name = "__**Updated " + updatedplayers.Count.ToString() + " Players**__";
+				if (level == "110")
+					x.Value = "Too many level 110's to list updates for.";
+				else
+					x.Value = tmpupdatedplayers;
+			});
+
+
+			string tmpfailedplayers = "";
+			foreach (string failedplayer in failedplayers)
+			{
+				tmpfailedplayers += failedplayer + " -- ";
+			}
+
+			// remove the trailing " -- " if it exist
+			if (!string.IsNullOrEmpty(tmpfailedplayers))
+				tmpfailedplayers = tmpfailedplayers.Substring(0, tmpfailedplayers.Length - 4);
+			else
+				tmpfailedplayers = "NONE";
+
+			embugc.AddField(x =>
+			{
+				x.IsInline = false;
+				x.Name = "__**Failed " + failedplayers.Count.ToString() + " Players**__";
+				x.Value = tmpfailedplayers;
+			});
+
+
+			embugc.Build();
+
+			#endregion
+
+			//await ReplyAsync(sb.ToString() + "\n");
+			await ReplyAsync("\n", embed: embugc);
 			await ReplyAsync("FINISHED adding/updating " + numofupdatedplayers.ToString() + " level " + level + " players out of " + numofplayers.ToString() + "  (" + DateTime.Now.ToString() + ")\n");
 		}
 
