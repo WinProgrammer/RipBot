@@ -335,6 +335,7 @@ namespace RipBot.Modules
 			da.Dispose();
 			da = null;
 
+			// build our output
 			StringBuilder sb = new StringBuilder();
 			sb.AppendLine("The following players are flagged for removal from " + guildname + ".");
 			sb.AppendLine();

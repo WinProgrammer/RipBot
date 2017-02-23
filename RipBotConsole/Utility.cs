@@ -8,6 +8,7 @@ using System.Globalization;
 using System.Threading;
 using RipBot.Types;
 using System.Collections;
+using Discord;
 
 namespace RipBot
 {
@@ -21,10 +22,30 @@ namespace RipBot
 		private static DateTime unixstartdate = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
 
-		//static Utility()
-		//{
 
-		//}
+
+		/// <summary>
+		/// Returns a Discord.EmbedBuilder set with the specified parameters.
+		/// </summary>
+		/// <param name="withname"></param>
+		/// <param name="withtitle"></param>
+		/// <param name="withdescription"></param>
+		/// <param name="withiconurl"></param>
+		/// <returns>A Discord.EmbedBuilder set with the specified parameters</returns>
+		public static EmbedBuilder GetBuilder(string withname, string withtitle, string withdescription, string withiconurl)
+		{
+			EmbedBuilder embedclasses = new EmbedBuilder()
+				.WithAuthor(new EmbedAuthorBuilder()
+				.WithIconUrl(withiconurl)
+				.WithName(withname))
+				.WithColor(new Color(0, 191, 255))
+				//.WithThumbnailUrl(Context.Guild.IconUrl)
+				.WithTitle(withtitle)
+				.WithDescription(withdescription)
+			;
+			return embedclasses;
+		}
+
 
 
 

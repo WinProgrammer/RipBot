@@ -44,7 +44,6 @@ namespace RipBot.Modules
 
 
 
-
 		/// <summary>
 		/// Display all Hordecorp High Council members.\nThis command ONLY works for Hordecorp.
 		/// </summary>
@@ -87,18 +86,8 @@ namespace RipBot.Modules
 			DataAccess da = new DataAccess();
 			string working = "";
 
-
-			EmbedBuilder embedofficers = new EmbedBuilder()
-				.WithAuthor(new EmbedAuthorBuilder()
-				.WithIconUrl(Context.Guild.IconUrl)
-				.WithName("WhoAreOfficers"))
-				.WithColor(new Color(0, 191, 255))
-				//.WithThumbnailUrl(Context.Guild.IconUrl)
-				.WithTitle("Gets a list of Hordecorp officers. (GM - Corporate)")
-				//.WithDescription("```\nripbot comparegear " + playersdescrip + "```")
-				.WithDescription("```\n" + "Players in **Bold** haven't been seen in the last 90 days." + "```")
-				;
-
+			EmbedBuilder embedofficers = Utility.GetBuilder(withname: "WhoAreOfficers", withtitle: "Gets a list of Hordecorp officers. (GM - Corporate)"
+				, withdescription: "```\n" + "Players in **Bold** haven't been seen in the last 90 days." + "```", withiconurl: Context.Guild.IconUrl);
 
 			List<string> gm = da.GetHordecorpGM();
 			gm.Sort();
@@ -601,16 +590,8 @@ namespace RipBot.Modules
 				playersdescrip += playernames[i] + " ";
 			}
 
-			EmbedBuilder embedgear = new EmbedBuilder()
-				.WithAuthor(new EmbedAuthorBuilder()
-				.WithIconUrl(Context.Guild.IconUrl)
-				.WithName("CompareGear"))
-				.WithColor(new Color(0, 191, 255))
-				//.WithThumbnailUrl(Context.Guild.IconUrl)
-				.WithTitle("Compare the gear of multiple players.")
-				//.WithDescription("```\nripbot comparegear " + playersdescrip + "```")
-				.WithDescription("```\n" + ilvlsforembed + "```")
-				;
+			EmbedBuilder embedgear = Utility.GetBuilder(withname: "CompareGear", withtitle: "Compare the gear of multiple players.",
+				withdescription: "```\n" + ilvlsforembed + "```", withiconurl: Context.Guild.IconUrl);
 
 
 			bool buildembedok = false;
@@ -737,9 +718,6 @@ namespace RipBot.Modules
 		public async Task ClassProfessionTotalsCmd([Remainder]string optionalguildname = null)
 		{
 			string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
-			//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
-
-
 
 			StringBuilder sb = new StringBuilder();
 			DataAccess da = new DataAccess();
@@ -756,17 +734,10 @@ namespace RipBot.Modules
 			int totalmembers = 0;
 			Hashtable TOTALS = da.GetProfessionTotals(guildname, out totalmembers);
 
-			EmbedBuilder embedclasses = new EmbedBuilder()
-			.WithAuthor(new EmbedAuthorBuilder()
-			.WithIconUrl(Context.Guild.IconUrl)
-			.WithName("get ProfessionTotals"))
-			.WithColor(new Color(0, 191, 255))
-			//.WithThumbnailUrl(Context.Guild.IconUrl)
-			.WithTitle("Gets the profession totals.")
-			.WithDescription("```\n" + String.Format("Profession totals for {0} who has {1} members.", guildname, totalmembers.ToString()) +
-				"\nThe UNKNOWN profession means that a player hasn't picked either a primary, secondary or both main professions" + "```")
-			;
-
+			EmbedBuilder embedclasses = Utility.GetBuilder(withname: "get ProfessionTotals", withtitle: "Gets the profession totals.",
+				withdescription: "```\n" + String.Format("Profession totals for {0} who has {1} members.", guildname,
+				totalmembers.ToString()) + "\nThe UNKNOWN profession means that a player hasn't picked either a primary, secondary or both main professions" + "```",
+				withiconurl: Context.Guild.IconUrl);
 
 			var allkeys = TOTALS.Keys;
 			foreach (string currentprofession in allkeys)
@@ -1024,9 +995,6 @@ namespace RipBot.Modules
 			public async Task ClassTotalsCmd([Remainder]string optionalguildname = null)
 			{
 				string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
-				//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
-
-
 
 				StringBuilder sb = new StringBuilder();
 				DataAccess da = new DataAccess();
@@ -1043,16 +1011,9 @@ namespace RipBot.Modules
 				int totalmembers = 0;
 				Hashtable TOTALS = da.GetClassTotals(guildname, out totalmembers);
 
-				EmbedBuilder embedclasses = new EmbedBuilder()
-				.WithAuthor(new EmbedAuthorBuilder()
-				.WithIconUrl(Context.Guild.IconUrl)
-				.WithName("get ClassTotals"))
-				.WithColor(new Color(0, 191, 255))
-				//.WithThumbnailUrl(Context.Guild.IconUrl)
-				.WithTitle("Gets the class totals.")
-				.WithDescription("```\n" + String.Format("Class totals for {0} who has {1} members.", guildname, totalmembers.ToString()) + "```")
-				;
-
+				EmbedBuilder embedclasses = Utility.GetBuilder(withname: "get ClassTotals", withtitle: "Gets the class totals.",
+					withdescription:  "```\n" + String.Format("Class totals for {0} who has {1} members.",
+					guildname, totalmembers.ToString()) + "```", withiconurl: Context.Guild.IconUrl);
 
 				var allkeys = TOTALS.Keys;
 				foreach (string currentclass in allkeys)
@@ -1072,7 +1033,6 @@ namespace RipBot.Modules
 
 				await ReplyAsync("", embed: embedclasses);
 			}
-
 
 
 
