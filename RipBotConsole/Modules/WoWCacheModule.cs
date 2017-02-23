@@ -59,21 +59,24 @@ namespace RipBot.Modules
 				string[] ranges = level.Split('-');
 				lowerrange = ranges[0].Trim();
 				upperrange = ranges[1].Trim();
+
+				// make sure the range isn't over level 100
+				if (int.Parse(lowerrange) > 100 || int.Parse(upperrange) > 100)
+				{
+					sb.AppendLine("Level ranges cannot exceed level 100.\nLevels 101 thru 110 must be run individually.");
+					await ReplyAsync(sb.ToString());
+					return;
+				}
+				
+				// make sure the range isn't over 100
+				if (int.Parse(upperrange) - int.Parse(lowerrange) > 10)
+				{
+					sb.AppendLine("Level ranges cannot exceed 10 levels at once.\nEX: ripbot updateguildcache 50-60 is ok.\nEX: ripbot updateguildcache 50-61 is NOT ok.");
+					await ReplyAsync(sb.ToString());
+					return;
+				}
 			}
-			// make sure the range isn't over level 100
-			if (int.Parse(lowerrange) > 100 || int.Parse(upperrange) > 100)
-			{
-				sb.AppendLine("Level ranges cannot exceed level 100.\nLevels 101 thru 110 must be run individually.");
-				await ReplyAsync(sb.ToString());
-				return;
-			}
-			// make sure the range isn't over 100
-			if (int.Parse(upperrange) - int.Parse(lowerrange) > 10)
-			{
-				sb.AppendLine("Level ranges cannot exceed 10 levels at once.\nEX: ripbot updateguildcache 50-60 is ok.\nEX: ripbot updateguildcache 50-61 is NOT ok.");
-				await ReplyAsync(sb.ToString());
-				return;
-			}
+
 
 			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
 			Character player = null;
