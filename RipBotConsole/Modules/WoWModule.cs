@@ -1163,7 +1163,6 @@ namespace RipBot.Modules
 				//string realm = Globals.DEFAULTREALM;
 
 
-
 				StringBuilder sb = new StringBuilder();
 
 				DataAccess da = new DataAccess();
@@ -1171,16 +1170,40 @@ namespace RipBot.Modules
 				da.Dispose();
 				da = null;
 
-				sb.AppendLine("Players who are level 110 but below " + averageitemlevel + " average iLvl.\n");
+				DateTime now = DateTime.Now;
+				// get todays unix time
+				long today = Utility.ConvertLocalTimeToUnix(now);
+				// subtract 90 days from now
+				TimeSpan ts = new TimeSpan(90, 0, 0, 0);
+				DateTime prev = now.Subtract(ts);
+				// convert that date to unix time
+				long span = Utility.ConvertLocalTimeToUnix(prev);
+
+
+				sb.AppendLine("Players who are level 110 but below " + averageitemlevel + " average iLvl.");
+				sb.AppendLine("Players in **Bold** haven't been seen in the last 90 days.\n");
 				sb.AppendLine();
 
+				string playername = "";
+				long lastmodified = 0;
 				foreach (DataRow dr in players.Rows)
 				{
 					// 0 means we haven't cached that particular player yet, so move to next record
 					if (dr["AverageItemLevel"].ToString() == "0") continue;
 
+					lastmodified = long.Parse(dr["LastModified"].ToString());
+					if (lastmodified <= span & lastmodified != 0)
+					{
+						// inactive
+						playername = "**" + dr["PlayerName"].ToString() + "**";
+					}
+					else
+					{
+						playername = dr["PlayerName"].ToString();
+					}
+
 					sb.AppendLine(String.Format("{0} has {1}\t\tLast seen {2}",
-						dr["PlayerName"].ToString(),
+						playername,
 						dr["AverageItemLevel"].ToString(),
 						dr["LastModifiedReadable"].ToString()));
 

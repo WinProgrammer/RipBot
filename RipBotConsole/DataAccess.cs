@@ -660,7 +660,7 @@ namespace RipBot
 		/// <returns>A DataTable containing the players, thier average ilvl and Last seen date.</returns>
 		public DataTable GetUndergeared110Players(string guildname, string ilvl)
 		{
-			string qry = "SELECT PlayerName, AverageItemLevel, LastModifiedReadable FROM PLAYERS WHERE Guildname = '" + guildname + "' AND AverageItemLevel <= " + ilvl + " AND Level >= 110 ORDER BY AverageItemLevel DESC";
+			string qry = "SELECT PlayerName, AverageItemLevel, LastModifiedReadable, LastModified FROM PLAYERS WHERE Guildname = '" + guildname + "' AND AverageItemLevel <= " + ilvl + " AND Level >= 110 ORDER BY AverageItemLevel DESC";
 
 			DataTable dt = GetTable(qry, "UndergearedPlayers");
 
