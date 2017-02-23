@@ -313,7 +313,6 @@ namespace RipBot.Modules
 
 				// if it doesn't then add to removal list
 				playerstoremove.Add(playername);
-
 			}
 
 			#endregion
@@ -324,10 +323,17 @@ namespace RipBot.Modules
 			da.Dispose();
 			da = null;
 
+			StringBuilder sb = new StringBuilder();
+			sb.AppendLine("The following players are flagged for removal from " + guildname + ".");
+			sb.AppendLine();
+			foreach (string flaggedplayer in playerstoremove)
+			{
+				sb.AppendLine(flaggedplayer);
+			}
+			sb.AppendLine();
+			sb.AppendLine((playersdeletedfromguild + " players purged from " + guildname + " cache out of " + playerstoremove.Count.ToString() + " to be purged  (" + DateTime.Now.ToString() + ")."));
 
-
-			await ReplyAsync(playersdeletedfromguild + " players purged from " + guildname + " cache out of " + playerstoremove.Count.ToString() + " to be purged  (" + DateTime.Now.ToString() + ").\n");
-			//await ReplyAsync(guildname + " had " + players.Count.ToString() + " members and now has " + DateTime.Now.ToString() + " members.\n");
+			await ReplyAsync(sb.ToString());
 		}
 
 	}
