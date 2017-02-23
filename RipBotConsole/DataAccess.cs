@@ -29,6 +29,16 @@ namespace RipBot
 
 		public event EventHandler GuildInfoUpdated;
 
+		/// <summary>
+		/// An enum that holds the result of a player upsert.
+		/// </summary>
+		public enum UpsertResult
+		{
+			ERROR = -1,
+			INSERTED = 0,
+			UPDATED = 1
+		}
+
 
 		/// <summary>
 		/// CStor
@@ -926,8 +936,8 @@ namespace RipBot
 		/// Upsert a player into the PLAYERS table.
 		/// </summary>
 		/// <param name="player">A WoWDotNetAPI.Modules.Character object.</param>
-		/// <returns>True uf successful, otherwise false.</returns>
-		public bool UpdatePlayer(Character player)
+		/// <returns>The result of a player upsert.</returns>
+		public UpsertResult UpdatePlayer(Character player)
 		{
 			if (!_isdbopen)
 				this.Open();
@@ -937,6 +947,7 @@ namespace RipBot
 			int numrows = 0;
 			string sql = "";
 			bool ret = false;
+			UpsertResult result = new UpsertResult();
 
 			// check if player exists
 			ret = DoesPlayersExist(player.Name);
@@ -945,11 +956,13 @@ namespace RipBot
 			{
 				// player exists so build update query
 				sql = BuildUpdatePlayerSQL(player);
+				result = UpsertResult.UPDATED;
 			}
 			else
 			{
 				// player does not exists so build insert query
 				sql = BuildInsertPlayerSQL(player);
+				result = UpsertResult.INSERTED;
 			}
 
 			cmd = new SQLiteCommand(sql, _cnn);
@@ -966,15 +979,15 @@ namespace RipBot
 			catch (SQLiteException se)
 			{
 				Console.WriteLine(se.Message);
-				return false;
+				result = UpsertResult.ERROR;
 			}
 			catch (Exception ex)
 			{
 				Console.WriteLine(ex.Message);
-				return false;
+				result = UpsertResult.ERROR;
 			}
 
-			return true;
+			return result;
 		}
 
 		private string BuildInsertPlayerSQL(Character player)

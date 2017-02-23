@@ -130,7 +130,7 @@ namespace RipBot.Modules
 			{
 				numofplayers = matchingplayersfromcache.Rows.Count;
 				numofupdatedplayers = 0;
-
+				DataAccess.UpsertResult result = new DataAccess.UpsertResult();
 
 				// loop through them
 				foreach (DataRow dr in matchingplayersfromcache.Rows)
@@ -148,16 +148,28 @@ namespace RipBot.Modules
 
 
 					// upsert the player
-					ret = false;
 					try
 					{
-						ret = da.UpdatePlayer(player);
+						result = da.UpdatePlayer(player);
+						switch (result)
+						{
+							case DataAccess.UpsertResult.INSERTED:
+								sb.AppendLine(player.Name + " was added to cache.");
+								break;
+
+							case DataAccess.UpsertResult.UPDATED:
+								sb.AppendLine(player.Name + " was updated in the cache.");
+								break;
+
+							default:
+								break;
+						}
 					}
 					catch (Exception exx)
 					{
 						Console.WriteLine(exx.Message);
 					}
-					if (ret)
+					if (result != DataAccess.UpsertResult.ERROR)
 					{
 						numofupdatedplayers++;
 					}

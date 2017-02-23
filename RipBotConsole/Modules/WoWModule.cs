@@ -255,7 +255,7 @@ namespace RipBot.Modules
 			}
 
 			// now upsert the player
-			ret = da.UpdatePlayer(player);
+			DataAccess.UpsertResult result = da.UpdatePlayer(player);
 
 			// get the spec and role for use in our output
 			string specname = da.GetFieldValue("SELECT SpecName FROM PLAYERS WHERE PlayerName = '" + player.Name + "'");
@@ -943,7 +943,7 @@ namespace RipBot.Modules
 				}
 
 				// upsert the player
-				ret = da.UpdatePlayer(player);
+				DataAccess.UpsertResult result = da.UpdatePlayer(player);
 				DateTime cachedate = da.GetPlayerCachedDateUnixReadableDate(player.Name);
 				da.Dispose();
 				da = null;
