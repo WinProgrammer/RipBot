@@ -161,8 +161,9 @@ namespace RipBot.Modules
 				working += player + " -- ";
 			}
 
-			// remove the trailing " -- "
-			working = working.Substring(0, working.Length - 4);
+			// remove the trailing " -- " if it exist
+			if (!string.IsNullOrEmpty(working))
+				working = working.Substring(0, working.Length - 4);
 
 			return working;
 		}
@@ -682,8 +683,9 @@ namespace RipBot.Modules
 				return false;
 			}
 
-			// remove the trailing " -- "
-			embvalue = tmp.Substring(0, tmp.Length - 4);
+			// remove the trailing " -- " if it exist
+			if (!string.IsNullOrEmpty(tmp))
+				embvalue = tmp.Substring(0, tmp.Length - 4);
 
 			try
 			{

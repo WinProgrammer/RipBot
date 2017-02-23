@@ -13,6 +13,7 @@ using WowDotNetAPI.Models;
 using System.Collections;
 using System.Data;
 using System.Threading;
+using Discord;
 
 namespace RipBot.Modules
 {
@@ -306,7 +307,6 @@ namespace RipBot.Modules
 			#region pull players list from cache
 
 			// create players list from cache
-			//List<string> players = new List<string>();
 			DataAccess da = new DataAccess();
 			List<string> players = da.GetPlayers(guildname);
 			players.Sort();
@@ -335,18 +335,40 @@ namespace RipBot.Modules
 			da.Dispose();
 			da = null;
 
-			// build our output
-			StringBuilder sb = new StringBuilder();
-			sb.AppendLine("The following players are flagged for removal from " + guildname + ".");
-			sb.AppendLine();
+
+			#region build our output
+
+			EmbedBuilder embpurges = Utility.GetBuilder(withname: "PurgePlayers", withtitle: "Purges a guilds players from the cache who are no longer are in the guild.",
+				withdescription: "```\n" + "The following players are flagged for removal from " + guildname + "." + "```", withiconurl: Context.Guild.IconUrl);
+
+			string tmp = "";
 			foreach (string flaggedplayer in playerstoremove)
 			{
-				sb.AppendLine(flaggedplayer);
+				tmp += flaggedplayer + " -- ";
 			}
-			sb.AppendLine();
-			sb.AppendLine((playersdeletedfromguild + " players purged from " + guildname + " cache out of " + playerstoremove.Count.ToString() + " to be purged  (" + DateTime.Now.ToString() + ")."));
 
-			await ReplyAsync(sb.ToString());
+			// remove the trailing " -- " if it exist
+			if(!string.IsNullOrEmpty(tmp))
+				tmp = tmp.Substring(0, tmp.Length - 4);
+
+			embpurges.AddField(x =>
+			{
+				x.IsInline = true;
+				x.Name = "__**Flagged**__";
+				if (string.IsNullOrEmpty(tmp))
+					x.Value = "No players to purge.";
+				else
+					x.Value = tmp;
+			});
+
+
+			embpurges.Build();
+
+			#endregion
+
+
+			await ReplyAsync("", embed: embpurges);
+			await ReplyAsync("\n" + playersdeletedfromguild + " players purged from " + guildname + " cache out of " + playerstoremove.Count.ToString() + " to be purged  (" + DateTime.Now.ToString() + ").");
 		}
 
 	}
