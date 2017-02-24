@@ -29,12 +29,6 @@ namespace RipBot
 
 
 
-		// TODO: while making the motd timer static does work, lets see if we can find a cleaner way of implementing it.
-
-		/// <summary>
-		/// The timer used for the MOTD functions.
-		/// </summary>
-		public static System.Timers.Timer MOTDTIMER = null;
 		/// <summary>
 		/// The MOTD message to use.
 		/// </summary>
