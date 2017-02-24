@@ -180,6 +180,7 @@
     <Compile Include="CommandHandler.cs" />
     <Compile Include="Common\Attributes\MinPermissions.cs" />
     <Compile Include="Common\Enums\AccessLevel.cs" />
+    <Compile Include="Common\Enums\HordecorpGuildRank.cs" />
     <Compile Include="Common\Types\BotConfiguration.cs" />
     <Compile Include="Common\Types\MOTDConfiguration.cs" />
     <Compile Include="Common\Types\WoWConfiguration.cs" />

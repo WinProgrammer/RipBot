@@ -13,6 +13,7 @@ using WowDotNetAPI.Models;
 using System.Collections;
 using System.Data;
 using Discord;
+using RipBot.Common.Enums;
 
 namespace RipBot.Modules
 {
@@ -1202,7 +1203,7 @@ namespace RipBot.Modules
 				da = null;
 
 				int intrank = 0;
-				Globals.GUILDRANK grr = Globals.GUILDRANK.Applicant;
+				HORDECORPGUILDRANK grr = HORDECORPGUILDRANK.Applicant;
 				string playersrank = "";
 
 				sb.AppendLine("There are " + dt.Rows.Count.ToString() + " players that haven't been seen in the last " + days + " days.");
@@ -1210,7 +1211,7 @@ namespace RipBot.Modules
 				foreach (DataRow dr in dt.Rows)
 				{
 					intrank = int.Parse(dr["GuildRank"].ToString());
-					grr = (Globals.GUILDRANK)intrank;
+					grr = (HORDECORPGUILDRANK)intrank;
 					playersrank = grr.ToString();
 
 					sb.AppendLine("**" + dr["PlayerName"].ToString() + "**\t(" + playersrank + ") last seen " + dr["LastModifiedReadable"].ToString());
