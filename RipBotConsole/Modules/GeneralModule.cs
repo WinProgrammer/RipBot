@@ -166,7 +166,7 @@ namespace RipBot.Modules
 				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
 				//x.Value = message.Content;
 				x.Name = "Name1";
-				x.Value = "Value1";
+				x.Value = "[TestUrl](https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg)";
 			});
 			emb.AddField(x =>
 			{
@@ -174,7 +174,7 @@ namespace RipBot.Modules
 				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
 				//x.Value = message.Content;
 				x.Name = "Name2";
-				x.Value = "Value2";
+				x.Value = "https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg";
 			});
 			emb.AddField(x =>
 			{
@@ -182,7 +182,7 @@ namespace RipBot.Modules
 				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
 				//x.Value = message.Content;
 				x.Name = "Name3";
-				x.Value = "Value3";
+				x.Value = "(https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg)";
 			});
 			emb.AddField(x =>
 			{
@@ -190,7 +190,7 @@ namespace RipBot.Modules
 				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
 				//x.Value = message.Content;
 				x.Name = "Name4";
-				x.Value = "Value4";
+				x.Value = "[https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg] Test";
 			});
 			emb.AddField(x =>
 			{

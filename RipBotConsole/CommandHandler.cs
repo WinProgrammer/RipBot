@@ -3,6 +3,7 @@ using Discord.WebSocket;
 using RipBot.Types;
 using System.Reflection;
 using System.Threading.Tasks;
+using RipBot.Services;
 
 namespace RipBot
 {
@@ -11,6 +12,7 @@ namespace RipBot
 	{
 		private DiscordSocketClient _client;
 		private CommandService _cmds;
+		private MOTDTimerService _timer;
 
 
 		/// <summary>
@@ -21,7 +23,9 @@ namespace RipBot
 		public async Task Install(DiscordSocketClient c)
 		{
 			_client = c;                                                 // Save an instance of the discord client.
-			_cmds = new CommandService();                                // Create a new instance of the commandservice.                              
+			_cmds = new CommandService();                                // Create a new instance of the commandservice.
+
+			_timer = new MOTDTimerService();                             // Create an instance of our MOTD timer service. 
 
 			await _cmds.AddModulesAsync(Assembly.GetEntryAssembly());    // Load all modules from the assembly.
 
@@ -55,7 +59,10 @@ namespace RipBot
 				return;
 
 			var map = new DependencyMap();                      // Create a new dependecy map.
-			map.Add(_cmds);
+			map.Add(_cmds);										// Add the command service to the dependency map
+
+			map.Add(_timer);									// Add our services to the dependency map
+
 			var context = new SocketCommandContext(_client, msg);     // Create a new command context.
 
 			int argPos = 0;                                     // Check if the message has either a string or mention prefix.

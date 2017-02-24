@@ -1,13 +1,11 @@
 ﻿using System;
-//using System.Threading; // 1) Add this namespace
 using System.Threading.Tasks;
 using Discord.Commands;
+using Discord.WebSocket;
 using RipBot.Attributes;
 using RipBot.Enums;
-
-using System.Timers;
+using RipBot.Services;
 using RipBot.Types;
-using Discord.WebSocket;
 
 namespace RipBot.Modules
 {
@@ -18,41 +16,145 @@ namespace RipBot.Modules
 	[RequireContext(ContextType.Guild)]
 	public class MOTDModule : ModuleBase<SocketCommandContext>
 	{
+		private readonly MOTDTimerService _service;
+
 		/// <summary>
 		/// CStor.
 		/// </summary>
-		public MOTDModule()
+		/// <param name="service"></param>
+		public MOTDModule(MOTDTimerService service)
 		{
+			_service = service;
 
+			// if the timer is not already running add an event handler
+			if (!Globals.TIMERRUNNING)
+			{
+				_service.MOTDTimerFired += _service_MOTDTimerFired;
+			}
 		}
 
 
-		//[Group("get"), Name("MOTD")]
-		//public class Get : ModuleBase<SocketCommandContext>
-		//{
-		private async void MOTDTimer_Elapsed(object sender, ElapsedEventArgs e)
+		/// <summary>
+		/// Handler for the timers elapsed event.
+		/// </summary>
+		/// <param name="sender"></param>
+		/// <param name="e"></param>
+		private async void _service_MOTDTimerFired(object sender, EventArgs e)
 		{
+			//Console.WriteLine("Timer fired from MOTDModule at " + DateTime.Now.ToString());
+
+			if (Globals.GUILDCHANNELSBYNAME["general"] == null)
+			{
+				await ReplyAsync("Could not get the general text channel at " + DateTime.Now.ToString());
+				return;
+			}
+
 			ulong ul = (ulong)Globals.GUILDCHANNELSBYNAME["general"];
 			SocketChannel channel = Context.Client.GetChannel(ul);
-			SocketTextChannel sokText = channel as SocketTextChannel;
-			await sokText?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
-			//           ^ This question mark is used to indicate that 'channel' may sometimes be null, and in cases that it is null, we will do nothing here.
+			SocketTextChannel chnGeneral = channel as SocketTextChannel;
+			// send the motd to the general guild channel
+			await chnGeneral?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
+			//              ^ This question mark is used to indicate that 'channel' may sometimes be null, and in cases that it is null, we will do nothing here.
 
-			
-			
-			//// this is here because we've been firing off the bot command from a different channel than general
-			//// and will also message it
-			//await ReplyAsync("Timer fired at " + DateTime.Now.ToString() + "\n");
-			//await ReplyAsync("MOTD:\n" + Globals.CURRENTMOTDMESSAGE + "\n");
+			await ReplyAsync("Timer fired from MOTDModule at " + DateTime.Now.ToString() + "\n\n");
+
+			//	//// this is here because we've been firing off the bot command from a different channel than general
+			//	//// and will also message it
+			//	//await ReplyAsync("Timer fired at " + DateTime.Now.ToString() + "\n");
+			//	//await ReplyAsync("MOTD:\n" + Globals.CURRENTMOTDMESSAGE + "\n");
 		}
 
 
-		private async Task SendMessageToChannel(ulong ChannelId)
+
+		/// <summary>
+		/// Stops the MOTD timer.
+		/// </summary>
+		/// <returns></returns>
+		[Command("stopmotdtimer")]
+		[Remarks("Stops the MOTD timer.\n")]
+		[Summary("EX: ripbot stopmotdtimer\n")]
+		[MinPermissions(AccessLevel.ServerAdmin)]
+		public async Task StopCmd()
 		{
-			// TODO: maybe use this for MOTD sending
-			var channel = Context.Client.GetChannel(ChannelId) as ISocketMessageChannel;
-			await channel?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
-			//           ^ This question mark is used to indicate that 'channel' may sometimes be null, and in cases that it is null, we will do nothing here.
+			// only kill it if it is running
+			if (Globals.TIMERRUNNING)
+			{
+				_service.Stop();
+				Globals.TIMERRUNNING = false;
+				// remove the event handler
+				_service.MOTDTimerFired -= _service_MOTDTimerFired;
+
+				await ReplyAsync("Timer stopped.\n");
+			}
+			else
+			{
+				await ReplyAsync("Timer already stopped.\n");
+			}
+		}
+
+
+		/// <summary>
+		/// Starts the MOTD timer.
+		/// </summary>
+		/// <param name="intervalinminutes">Optional. Sets the interval when starting the timer.</param>
+		/// <returns></returns>
+		[Command("startmotdtimer")]
+		[Remarks("Starts the MOTD timer.\n")]
+		[Summary("EX: ripbot startmotdtimer\nEX: ripbot startmotdtimer 5\n")]
+		[MinPermissions(AccessLevel.ServerAdmin)]
+		public async Task RestartCmd([Remainder]string intervalinminutes = null)
+		{
+			string ourintervalinminutes = intervalinminutes ?? Globals.CURRENTMOTDINTERVAL;
+
+			// if the passed interval is different than the global, update the global
+			if (ourintervalinminutes != Globals.CURRENTMOTDINTERVAL)
+			{
+				await this.SetMOTDIntervalCmd(ourintervalinminutes);
+			}
+
+			Globals.TIMERRUNNING = false;
+
+			// cache our current guild channels
+			bool ret = Utility.CacheOurChannels(Context.Guild);
+			if (!ret)
+			{
+				await ReplyAsync("Could not cache the guild channel list.\nMOTD timer not started.\n");
+				//return Task.CompletedTask;
+				return;
+			}
+
+			// make sure it's a valid number
+			double chk = 0;
+			if (!double.TryParse(ourintervalinminutes, out chk))
+			{
+				await ReplyAsync("Invalid interval. Please use 'ripbot setmotdinterval x' command to set the interval in minutes.\n");
+				return;
+			}
+
+			// make sure it's high enough so we dont get rate limit banned (which is actually like 10-15 seconds or so)
+			if (chk < 1)
+			{
+				await ReplyAsync("Please enter a number that is 1+ to prevent getting rate limit banned.\n");
+				return;
+			}
+
+			//double intervalinseconds = (chk * 60) * 1000;
+			//300000 = 5 minutes
+			// only create it if it isn't running
+			if (!Globals.TIMERRUNNING)
+			{
+				_service.SetInterval(double.Parse(Globals.CURRENTMOTDINTERVAL));
+				_service.Restart();
+				Globals.TIMERRUNNING = true;
+
+				await ReplyAsync("Timer (re)started.\n");
+			}
+			else
+			{
+				// change the interval
+				_service.SetInterval(double.Parse(Globals.CURRENTMOTDINTERVAL));
+				await ReplyAsync("Timer already started.\n");
+			}
 		}
 
 
@@ -69,13 +171,16 @@ namespace RipBot.Modules
 		public async Task SetMOTDCmd([Remainder]string message)
 		{
 			var config = new MOTDConfiguration();               // Create a new configuration object.
-			config.Message = message;   // Set the default message.
+			// Set the default message.
+			config.Message = message;
+			// use the global interval
 			config.IntervalInMinutes = Globals.CURRENTMOTDINTERVAL;
+			// save the config
 			config.Save();
-
+			// reload the global motd message setting
 			Globals.CURRENTMOTDMESSAGE = config.Message;
 
-			await ReplyAsync("MOTD set to:\n");
+			await ReplyAsync("MOTD set to:\n\n");
 			await ReplyAsync(config.Message + "\n");
 		}
 
@@ -91,7 +196,6 @@ namespace RipBot.Modules
 		[MinPermissions(AccessLevel.ServerAdmin)]
 		public async Task SetMOTDIntervalCmd([Remainder]string intervalinminutes)
 		{
-			// public static string MASHERYAPIKEY = MOTDConfiguration.Load().Message;
 			double chk = 0;
 			if (!double.TryParse(intervalinminutes, out chk))
 			{
@@ -102,38 +206,40 @@ namespace RipBot.Modules
 			// make sure it's high enough so we dont get rate limit banned (which is actually like 10-15 seconds or so)
 			if (chk < 1)
 			{
-				await ReplyAsync("Please enter a number that is 1+ to prevent getting rate limit banned.\n");
+				await ReplyAsync("Please enter a number that is 1+ to prevent getting rate limit banned by Discord.\n");
 				return;
 			}
 
-			// if the timer is running then let them know to stop it first
-			if (Globals.TIMERRUNNING)
-			{
-				await ReplyAsync("Please stop the MOTD timer before changing it's interval.\n");
-				return;
-			}
-
-
-			var config = new MOTDConfiguration();               // Create a new configuration object.
+			// recreate the motd config
+			var config = new MOTDConfiguration();
+			// use the existing motd message
 			config.Message = Globals.CURRENTMOTDMESSAGE;
-			config.IntervalInMinutes = intervalinminutes;   // Set the new interval in minutes.
+			// update the interval with our new one
+			config.IntervalInMinutes = intervalinminutes;
+			// save it
 			config.Save();
-
+			// reload the global interval setting
 			Globals.CURRENTMOTDINTERVAL = config.IntervalInMinutes;
 
-			//// if the timer is running then update it's interval
-			//if (Globals.TIMERRUNNING)
-			//{
-			//	Globals.MOTDTIMER.Interval = chk;
-			//	await ReplyAsync("MOTD interval in minutes CHANGED to:\n");
-			//	await ReplyAsync(config.IntervalInMinutes + "\n");
-			//}
-			//else
-			//{
-			//	await ReplyAsync("MOTD interval in minutes set to:\n");
-			//	await ReplyAsync(config.IntervalInMinutes + "\n");
-			//}
+			bool ret = false;
+			if (Globals.TIMERRUNNING)
+			{
+				// the timer is running so try to change it's interval
+				ret = _service.SetInterval(double.Parse(Globals.CURRENTMOTDINTERVAL));
 
+				if (ret)
+				{
+					await ReplyAsync("MOTD interval in minutes changed to: " + config.IntervalInMinutes + " minutes.\n");
+				}
+				else
+				{
+					await ReplyAsync("MOTD interval in minutes **NOT CHANGED** to: " + config.IntervalInMinutes + " minutes.\n");
+				}
+			}
+			else
+			{
+				await ReplyAsync("MOTD timer isn't running but interval in minutes changed to: " + config.IntervalInMinutes + " minutes in the config.\n");
+			}
 		}
 
 
@@ -168,106 +274,14 @@ namespace RipBot.Modules
 
 
 
-		/// <summary>
-		/// Starts the MOTD timer.
-		/// </summary>
-		/// <returns></returns>
-		[Command("startmotdtimer")]
-		[Remarks("Starts the MOTD timer.\n")]
-		[Summary("EX: ripbot startmotdtimer\n")]
-		[MinPermissions(AccessLevel.ServerAdmin)]
-		public async Task StartMOTDTimerCmd()
-		{
-			bool ret = Utility.CacheOurChannels(Context.Guild);
-			if (!ret)
-			{
-				await ReplyAsync("Could not cache channel list.\nMOTD timer not started.\n");
-				//return Task.CompletedTask;
-				return;
-			}
-
-			//string intervalinminutes = MOTDConfiguration.Load().IntervalInMinutes;
-			string intervalinminutes = Globals.CURRENTMOTDINTERVAL;
-
-			// make sure it's a valid number
-			double chk = 0;
-			if (!double.TryParse(intervalinminutes, out chk))
-			{
-				await ReplyAsync("Invalid interval. Please use 'ripbot setmotdinterval x' command to set the interval in minutes.\n");
-				return;
-			}
-			
-			// make sure it's high enough so we dont get rate limit banned (which is actually like 10-15 seconds or so)
-			if (chk < 1)
-			{
-				await ReplyAsync("Please enter a number that is 1+ to prevent getting rate limit banned.\n");
-				return;
-			}
-
-			double intervalinseconds = (chk * 60) * 1000;
-			//300000 = 5 minutes
-			// only create it if it isn't running
-			if (!Globals.TIMERRUNNING)
-			{
-				// Create a timer with a 5 second interval
-				//aTimer = new Timer(5000);
-				Globals.MOTDTIMER = new Timer(intervalinseconds);
-				// Hook up the Elapsed event for the timer
-				Globals.MOTDTIMER.Elapsed += MOTDTimer_Elapsed;
-				Globals.MOTDTIMER.AutoReset = true;
-				Globals.MOTDTIMER.Enabled = true;
-				Globals.MOTDTIMER.Start();
-
-				Globals.TIMERRUNNING = true;
-
-				await ReplyAsync("Timer started.\n");
-			}
-			else
-			{
-				await ReplyAsync("Timer already started.\n");
-			}
-		}
 
 
-
-		/// <summary>
-		/// Stops the MOTD timer.
-		/// </summary>
-		/// <returns></returns>
-		[Command("stopmotdtimer")]
-		[Remarks("Stops the MOTD timer.\n")]
-		[Summary("EX: ripbot stopmotdtimer\n")]
-		[MinPermissions(AccessLevel.ServerAdmin)]
-		public async Task StopMOTDTimerCmd()
-		{
-			// only kill it if it is running
-			if (Globals.TIMERRUNNING)
-			{
-				Globals.MOTDTIMER.Enabled = false;
-				Globals.MOTDTIMER.Stop();
-				// kill the Elapsed event for the timer
-				Globals.MOTDTIMER.Elapsed -= MOTDTimer_Elapsed;
-				Globals.MOTDTIMER.Dispose();
-				Globals.MOTDTIMER = null;
-
-				Globals.TIMERRUNNING = false;
-
-				await ReplyAsync("Timer stopped.\n");
-			}
-			else
-			{
-				await ReplyAsync("Timer already stopped.\n");
-			}
-		}
-
-		//[Command("restarttimer")]
-		//[MinPermissions(AccessLevel.ServerAdmin)]
-		//public async Task RestartCmd()
+		//private async Task SendMessageToChannel(ulong ChannelId)
 		//{
-		//	//_service.Restart();
-		//	await ReplyAsync("Timer (re)started.");
+		//	// TODO: maybe use this for MOTD sending
+		//	var channel = Context.Client.GetChannel(ChannelId) as ISocketMessageChannel;
+		//	await channel?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
+		//	//           ^ This question mark is used to indicate that 'channel' may sometimes be null, and in cases that it is null, we will do nothing here.
 		//}
 	}
-	//}
-
 }
