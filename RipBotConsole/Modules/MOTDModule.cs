@@ -43,15 +43,18 @@ namespace RipBot.Modules
 		{
 			//Console.WriteLine("Timer fired from MOTDModule at " + DateTime.Now.ToString());
 
-			if (Globals.GUILDCHANNELSBYNAME["general"] == null)
-			{
-				await ReplyAsync("Could not get the general text channel at " + DateTime.Now.ToString());
-				return;
-			}
+			//if (Globals.GUILDCHANNELSBYNAME["general"] == null)
+			//{
+			//	await ReplyAsync("Could not get the general text channel at " + DateTime.Now.ToString());
+			//	return;
+			//}
 
-			ulong ul = (ulong)Globals.GUILDCHANNELSBYNAME["general"];
-			SocketChannel channel = Context.Client.GetChannel(ul);
-			SocketTextChannel chnGeneral = channel as SocketTextChannel;
+			//ulong ul = (ulong)Globals.GUILDCHANNELSBYNAME["general"];
+			//SocketChannel channel = Context.Client.GetChannel(ul);
+			//SocketTextChannel chnGeneral = channel as SocketTextChannel;
+
+			SocketTextChannel chnGeneral = (SocketTextChannel) Context.Client.GetChannel(Context.Guild.DefaultChannelId);
+
 			// send the motd to the general guild channel
 			await chnGeneral?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
 			//              ^ This question mark is used to indicate that 'channel' may sometimes be null, and in cases that it is null, we will do nothing here.

@@ -129,96 +129,127 @@ namespace RipBot.Modules
 		[MinPermissions(AccessLevel.ServerAdmin)]
 		public async Task TestCmd()
 		{
-			StringBuilder sb = new StringBuilder();
-			sb.AppendLine("Test:\n\n");
-
-
-
-			EmbedBuilder emb = new EmbedBuilder()
-			//emb.WithDescription("Description");
-
-			    .WithAuthor(new EmbedAuthorBuilder()
-				.WithIconUrl("http://vignette4.wikia.nocookie.net/mspaintadventures/images/7/77/Omgitsskaia.png/revision/latest?cb=20111231073525")
-				.WithName("Profile"))
-				.WithColor(new Color(0, 191, 255))
-				//.WithThumbnailUrl("http://vignette4.wikia.nocookie.net/mspaintadventures/images/7/77/Omgitsskaia.png/revision/latest?cb=20111231073525")
-				.WithTitle("Title")
-				.WithDescription("Description")
-				//.WithTimestamp(DateTime.Now.ToLocalTime())
-				.WithCurrentTimestamp()
-				;
-
-
-
-			//// Author
-			//EmbedAuthorBuilder embauth = new EmbedAuthorBuilder();
-			//embauth.Name = "RipBot";
-			////embauth.IconUrl = message.Author.AvatarUrl;
-			//emb.WithAuthor(embauth);
-
-			bool inline = true;
-
-			// Fields
-			emb.AddField(efb => efb.WithName(Format.Bold("TestName1")).WithValue("TestValue1").WithIsInline(false));
-			emb.AddField(x =>
+			// cache our current guild channels
+			bool ret = Utility.CacheOurChannels(Context.Guild);
+			if (!ret)
 			{
-				x.IsInline = inline;
-				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
-				//x.Value = message.Content;
-				x.Name = "Name1";
-				x.Value = "[TestUrl](https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg)";
-			});
-			emb.AddField(x =>
-			{
-				x.IsInline = inline;
-				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
-				//x.Value = message.Content;
-				x.Name = "Name2";
-				x.Value = "https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg";
-			});
-			emb.AddField(x =>
-			{
-				x.IsInline = inline;
-				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
-				//x.Value = message.Content;
-				x.Name = "Name3";
-				x.Value = "(https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg)";
-			});
-			emb.AddField(x =>
-			{
-				x.IsInline = inline;
-				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
-				//x.Value = message.Content;
-				x.Name = "Name4";
-				x.Value = "[https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg] Test";
-			});
-			emb.AddField(x =>
-			{
-				x.IsInline = inline;
-				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
-				//x.Value = message.Content;
-				x.Name = "Name5";
-				x.Value = "Value5";
-			});
-			emb.AddField(x =>
-			{
-				x.IsInline = inline;
-				//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
-				//x.Value = message.Content;
-				x.Name = "Name6";
-				x.Value = "Value6";
+				await ReplyAsync("Could not cache the guild channel list.\nMOTD timer not started.\n");
+				//return Task.CompletedTask;
+				return;
 			}
-			);
-
-			// Footer
-			EmbedFooterBuilder embfoot = new EmbedFooterBuilder();
-			embfoot.Text = "Footer";
-			emb.WithFooter(embfoot);
-
-			emb.Build();
 
 
-			await ReplyAsync("", embed: emb);
+			SocketChannel channelGeneral = Context.Client.GetChannel(Context.Guild.DefaultChannelId);
+
+
+
+
+			if (Globals.GUILDCHANNELSBYNAME["general"] == null)
+			{
+				await ReplyAsync("Could not get the general text channel at " + DateTime.Now.ToString());
+				return;
+			}
+
+			ulong ul = (ulong)Globals.GUILDCHANNELSBYNAME["general"];
+			SocketChannel channel = Context.Client.GetChannel(ul);
+			SocketTextChannel chnGeneral = channel as SocketTextChannel;
+			// send the motd to the general guild channel
+			await chnGeneral?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
+			//              ^ This question mark is used to indicate that 'channel' may sometimes be null, and in cases that it is null, we will do nothing here.
+
+
+
+
+			StringBuilder sb = new StringBuilder();
+			//sb.AppendLine("Test:\n\n");
+
+
+
+			//EmbedBuilder emb = new EmbedBuilder()
+			////emb.WithDescription("Description");
+
+			//    .WithAuthor(new EmbedAuthorBuilder()
+			//	.WithIconUrl("http://vignette4.wikia.nocookie.net/mspaintadventures/images/7/77/Omgitsskaia.png/revision/latest?cb=20111231073525")
+			//	.WithName("Profile"))
+			//	.WithColor(new Color(0, 191, 255))
+			//	//.WithThumbnailUrl("http://vignette4.wikia.nocookie.net/mspaintadventures/images/7/77/Omgitsskaia.png/revision/latest?cb=20111231073525")
+			//	.WithTitle("Title")
+			//	.WithDescription("Description")
+			//	//.WithTimestamp(DateTime.Now.ToLocalTime())
+			//	.WithCurrentTimestamp()
+			//	;
+
+
+
+			////// Author
+			////EmbedAuthorBuilder embauth = new EmbedAuthorBuilder();
+			////embauth.Name = "RipBot";
+			//////embauth.IconUrl = message.Author.AvatarUrl;
+			////emb.WithAuthor(embauth);
+
+			//bool inline = true;
+
+			//// Fields
+			//emb.AddField(efb => efb.WithName(Format.Bold("TestName1")).WithValue("TestValue1").WithIsInline(false));
+			//emb.AddField(x =>
+			//{
+			//	x.IsInline = inline;
+			//	//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
+			//	//x.Value = message.Content;
+			//	x.Name = "Name1";
+			//	x.Value = "[TestUrl](https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg)";
+			//});
+			//emb.AddField(x =>
+			//{
+			//	x.IsInline = inline;
+			//	//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
+			//	//x.Value = message.Content;
+			//	x.Name = "Name2";
+			//	x.Value = "https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg";
+			//});
+			//emb.AddField(x =>
+			//{
+			//	x.IsInline = inline;
+			//	//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
+			//	//x.Value = message.Content;
+			//	x.Name = "Name3";
+			//	x.Value = "(https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg)";
+			//});
+			//emb.AddField(x =>
+			//{
+			//	x.IsInline = inline;
+			//	//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
+			//	//x.Value = message.Content;
+			//	x.Name = "Name4";
+			//	x.Value = "[https://wow.zamimg.com/images/wow/icons/large/inv_6_2raid_ring_2a.jpg] Test";
+			//});
+			//emb.AddField(x =>
+			//{
+			//	x.IsInline = inline;
+			//	//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
+			//	//x.Value = message.Content;
+			//	x.Name = "Name5";
+			//	x.Value = "Value5";
+			//});
+			//emb.AddField(x =>
+			//{
+			//	x.IsInline = inline;
+			//	//x.Name = message.CreatedAt.ToUniversalTime().ToString() + "UTC";
+			//	//x.Value = message.Content;
+			//	x.Name = "Name6";
+			//	x.Value = "Value6";
+			//}
+			//);
+
+			//// Footer
+			//EmbedFooterBuilder embfoot = new EmbedFooterBuilder();
+			//embfoot.Text = "Footer";
+			//emb.WithFooter(embfoot);
+
+			//emb.Build();
+
+
+			//await ReplyAsync("", embed: emb);
 
 
 
