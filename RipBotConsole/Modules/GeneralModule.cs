@@ -129,37 +129,6 @@ namespace RipBot.Modules
 		[MinPermissions(AccessLevel.ServerAdmin)]
 		public async Task TestCmd()
 		{
-			// cache our current guild channels
-			bool ret = Utility.CacheOurChannels(Context.Guild);
-			if (!ret)
-			{
-				await ReplyAsync("Could not cache the guild channel list.\nMOTD timer not started.\n");
-				//return Task.CompletedTask;
-				return;
-			}
-
-
-			SocketChannel channelGeneral = Context.Client.GetChannel(Context.Guild.DefaultChannelId);
-
-
-
-
-			if (Globals.GUILDCHANNELSBYNAME["general"] == null)
-			{
-				await ReplyAsync("Could not get the general text channel at " + DateTime.Now.ToString());
-				return;
-			}
-
-			ulong ul = (ulong)Globals.GUILDCHANNELSBYNAME["general"];
-			SocketChannel channel = Context.Client.GetChannel(ul);
-			SocketTextChannel chnGeneral = channel as SocketTextChannel;
-			// send the motd to the general guild channel
-			await chnGeneral?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");
-			//              ^ This question mark is used to indicate that 'channel' may sometimes be null, and in cases that it is null, we will do nothing here.
-
-
-
-
 			StringBuilder sb = new StringBuilder();
 			//sb.AppendLine("Test:\n\n");
 
