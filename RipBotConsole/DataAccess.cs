@@ -1009,34 +1009,34 @@ namespace RipBot
 			sb.Clear();
 			sb.Append("INSERT INTO PLAYERS (PlayerID, PlayerName, GuildName, Realm, Level, Class, Race, AchievementPoints, AchievementsCompleted, Gender,");
 			sb.Append("AverageItemLevel, AverageItemLevelEquipped, Profession1, Profession1Rank, Profession2, Profession2Rank, QuestsCompleted, TotalHonorableKills, LastModified, LastModifiedReadable, CachedDateUnix) VALUES (");
-			sb.Append(String.Format("{0}, '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}', '{14}', '{15}', '{16}', '{17}', '{18}', '{19}'",
-				"null",                                             // PlayerID
-				player.Name,                                        // PlayerName
-				player.Guild != null ? player.Guild.Name : "Not in a Guild",    // GuildName
-				player.Realm,                                       // Realm
-				player.Level.ToString(),                            // Level
-				Utility.ToTitleCase(player.Class.ToString()),       // Class
-				Utility.ToTitleCase(player.Race.ToString()),        // Race
-				player.AchievementPoints.ToString(),                // AchievementPoints
-				player.Achievements.AchievementsCompleted.Count().ToString(),    // AchievementsCompleted
-				Utility.ToTitleCase(player.Gender.ToString()),      // Gender
-				player.Items.AverageItemLevel.ToString(),           // AverageItemLevel
-				player.Items.AverageItemLevelEquipped.ToString(),   // AverageItemLevelEquipped
+			sb.Append(String.Format("{0}, '{1}', '{2}', '{3}', '{4}', '{5}', '{6}', '{7}', '{8}', '{9}', '{10}', '{11}', '{12}', '{13}', '{14}', '{15}', '{16}', '{17}', '{18}', '{19}', '{20}'",
+				"null",                                             // 0 PlayerID
+				player.Name,                                        // 1 PlayerName
+				player.Guild != null ? player.Guild.Name : "Not in a Guild",    // 2 GuildName
+				player.Realm,                                       // 3 Realm
+				player.Level.ToString(),                            // 4 Level
+				Utility.ToTitleCase(player.Class.ToString()),       // 5 Class
+				Utility.ToTitleCase(player.Race.ToString()),        // 6 Race
+				player.AchievementPoints.ToString(),                // 7 AchievementPoints
+				player.Achievements.AchievementsCompleted.Count().ToString(),    // 8 AchievementsCompleted
+				Utility.ToTitleCase(player.Gender.ToString()),      // 9 Gender
+				player.Items.AverageItemLevel.ToString(),           // 10 AverageItemLevel
+				player.Items.AverageItemLevelEquipped.ToString(),   // 11 AverageItemLevelEquipped
 
 
-				numofprofs >= 1 ? profs[0].Name : "UNKNOWN",        // Profession1
-				numofprofs >= 1 ? profs[0].Rank.ToString() : "0",   // Profession1Rank
-				numofprofs > 1 ? profs[1].Name : "UNKNOWN",         // Profession2
-				numofprofs > 1 ? profs[1].Rank.ToString() : "0",    // Profession2Rank
+				numofprofs >= 1 ? profs[0].Name : "UNKNOWN",        // 12 Profession1
+				numofprofs >= 1 ? profs[0].Rank.ToString() : "0",   // 13 Profession1Rank
+				numofprofs > 1 ? profs[1].Name : "UNKNOWN",         // 14 Profession2
+				numofprofs > 1 ? profs[1].Rank.ToString() : "0",    // 15 Profession2Rank
 
 
 				//(Quest)player.Quests),
-				"0",                                                // QuestsCompleted
+				"0",                                                // 16 QuestsCompleted
 
-				player.TotalHonorableKills.ToString(),              // TotalHonorableKills
-				player.LastModified,                                // LastModified
-				Utility.ConvertUnixToLocalTime(player.LastModified),// LastModifiedReadable
-				Utility.ConvertLocalTimeToUnix(DateTime.Now)        // CachedDateUnix
+				player.TotalHonorableKills.ToString(),              // 17 TotalHonorableKills
+				player.LastModified,                                // 18 LastModified
+				Utility.ConvertUnixToLocalTime(player.LastModified),// 19 LastModifiedReadable
+				Utility.ConvertLocalTimeToUnix(DateTime.Now)        // 20 CachedDateUnix
 				));
 			sb.Append(")");
 
@@ -1061,31 +1061,31 @@ namespace RipBot
 			try
 			{
 				sb.Append(String.Format(p3,
-					player.Guild != null ? player.Guild.Name : "Not in a Guild",    // GuildName
-					player.Realm,                                       // Realm
-					player.Level.ToString(),                            // Level
-					Utility.ToTitleCase(player.Class.ToString()),       // Class
-					Utility.ToTitleCase(player.Race.ToString()),        // Race
-					player.AchievementPoints.ToString(),                // AchievementPoints
-					player.Achievements.AchievementsCompleted.Count().ToString(), // AchievementsCompleted
-					Utility.ToTitleCase(player.Gender.ToString()),      // Gender
-					player.Items.AverageItemLevel.ToString(),           // AverageItemLevel
-					player.Items.AverageItemLevelEquipped.ToString(),   // AverageItemLevelEquipped
+					player.Guild != null ? player.Guild.Name : "Not in a Guild",    // 0 GuildName
+					player.Realm,                                       // 1 Realm
+					player.Level.ToString(),                            // 2 Level
+					Utility.ToTitleCase(player.Class.ToString()),       // 3 Class
+					Utility.ToTitleCase(player.Race.ToString()),        // 4 Race
+					player.AchievementPoints.ToString(),                // 5 AchievementPoints
+					player.Achievements.AchievementsCompleted.Count().ToString(), // 6 AchievementsCompleted
+					Utility.ToTitleCase(player.Gender.ToString()),      // 7 Gender
+					player.Items.AverageItemLevel.ToString(),           // 8 AverageItemLevel
+					player.Items.AverageItemLevelEquipped.ToString(),   // 9 AverageItemLevelEquipped
 
-					numofprofs >= 1 ? profs[0].Name : "UNKNOWN",        // Profession1
-					numofprofs >= 1 ? profs[0].Rank.ToString() : "0",   // Profession1Rank
-					numofprofs > 1 ? profs[1].Name : "UNKNOWN",         // Profession2
-					numofprofs > 1 ? profs[1].Rank.ToString() : "0",    // Profession2Rank
+					numofprofs >= 1 ? profs[0].Name : "UNKNOWN",        // 10 Profession1
+					numofprofs >= 1 ? profs[0].Rank.ToString() : "0",   // 11 Profession1Rank
+					numofprofs > 1 ? profs[1].Name : "UNKNOWN",         // 12 Profession2
+					numofprofs > 1 ? profs[1].Rank.ToString() : "0",    // 13 Profession2Rank
 
 
 					//(Quest)player.Quests),
-					"0",                                                // QuestsCompleted
+					"0",                                                // 14 QuestsCompleted
 
-					player.TotalHonorableKills.ToString(),              // TotalHonorableKills
-					player.LastModified,                                // LastModified
-					Utility.ConvertUnixToLocalTime(player.LastModified),// LastModifiedReadable
-					Utility.ConvertLocalTimeToUnix(DateTime.Now),       // CachedDateUnix
-					player.Name
+					player.TotalHonorableKills.ToString(),              // 15 TotalHonorableKills
+					player.LastModified,                                // 16 LastModified
+					Utility.ConvertUnixToLocalTime(player.LastModified),// 17 LastModifiedReadable
+					Utility.ConvertLocalTimeToUnix(DateTime.Now),       // 18 CachedDateUnix
+					player.Name											// 19 PlayerName
 					));
 
 			}

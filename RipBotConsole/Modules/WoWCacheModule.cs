@@ -68,7 +68,7 @@ namespace RipBot.Modules
 					await ReplyAsync(sb.ToString());
 					return;
 				}
-				
+
 				// make sure the range isn't over 100
 				if (int.Parse(upperrange) - int.Parse(lowerrange) > 10)
 				{
@@ -98,13 +98,13 @@ namespace RipBot.Modules
 			// if it doesn't, get it
 			if (!ret)
 			{
-				Guild theguild = null;
+				Guild thenewguild = null;
 
 				try
 				{
-					theguild = explorer.GetGuild(Globals.DEFAULTREALM, guildname, GuildOptions.GetEverything);
+					thenewguild = explorer.GetGuild(Globals.DEFAULTREALM, guildname, GuildOptions.GetEverything);
 
-					UpdateGuildInfo(theguild);
+					UpdateGuildInfo(thenewguild);
 				}
 				catch
 				{
@@ -115,7 +115,7 @@ namespace RipBot.Modules
 					return;
 				}
 
-				theguild = null;
+				thenewguild = null;
 			}
 
 
@@ -124,6 +124,7 @@ namespace RipBot.Modules
 			List<string> insertedplayers = new List<string>();
 			List<string> updatedplayers = new List<string>();
 			List<string> failedplayers = new List<string>();
+			DataAccess.UpsertResult result = new DataAccess.UpsertResult();
 
 
 			// Get the list of playernames in a guild from the cache who have a matching lvl
@@ -138,7 +139,6 @@ namespace RipBot.Modules
 			{
 				numofplayers = matchingplayersfromcache.Rows.Count;
 				numofupdatedplayers = 0;
-				DataAccess.UpsertResult result = new DataAccess.UpsertResult();
 
 				// loop through them
 				foreach (DataRow dr in matchingplayersfromcache.Rows)
@@ -210,12 +210,102 @@ namespace RipBot.Modules
 			}
 
 			matchingplayersfromcache = null;
-			da.Dispose();
-			da = null;
+
 			player = null;
 
-			#region build our output
 
+			// TODO: get the inserted players
+
+			// get players from wow
+			List<string> playersfromwow = new List<string>();
+			Guild theguild = explorer.GetGuild(Globals.DEFAULTREALM, guildname, GuildOptions.GetMembers);
+			foreach (GuildMember gm in theguild.Members)
+			{
+				playersfromwow.Add(gm.Character.Name);
+			}
+			playersfromwow.Sort();
+
+
+
+			// get players from cache
+			List<string> playersfromcache = da.GetPlayers(guildname);
+			playersfromcache.Sort();
+
+
+
+			// create list of players in wow but not cache
+			List<string> playerstoinsert = new List<string>();
+			foreach (string playerinwow in playersfromwow)
+			{
+				if (!playersfromcache.Contains(playerinwow))
+					playerstoinsert.Add(playerinwow);
+			}
+
+			//// create list of players in cache but not wow for purge
+			//List<string> playerstopurge = new List<string>();
+			//foreach (string playerincache in playersfromcache)
+			//{
+			//	if (!playersfromwow.Contains(playerincache))
+			//		playerstopurge.Add(playerincache);
+			//}
+
+			// add the players to the cache that are missing
+			foreach (string playertoadd in playerstoinsert)
+			{
+				player = explorer.GetCharacter(Globals.DEFAULTREALM, playertoadd, CharacterOptions.GetEverything);
+				result = da.UpdatePlayer(player);
+				switch (result)
+				{
+					case DataAccess.UpsertResult.INSERTED:
+						//sb.AppendLine(player.Name + " was added to cache.");
+						insertedplayers.Add(player.Name);
+						break;
+
+					case DataAccess.UpsertResult.UPDATED:
+						//sb.AppendLine(player.Name + " was updated in the cache.");
+						updatedplayers.Add(player.Name);
+						break;
+
+					case DataAccess.UpsertResult.ERROR:
+						failedplayers.Add(player.Name);
+						break;
+
+					default:
+						break;
+				}
+			}
+
+
+
+			da.Dispose();
+			da = null;
+			explorer = null;
+
+			// build the output
+			EmbedBuilder embugc = BuildUGCOutput(level, guildname, insertedplayers, updatedplayers, failedplayers);
+
+
+			//await ReplyAsync(sb.ToString() + "\n");
+			await ReplyAsync("\n", embed: embugc);
+			await ReplyAsync("FINISHED adding/updating " + numofupdatedplayers.ToString() + " level " + level + " players out of " + numofplayers.ToString() + "  (" + DateTime.Now.ToString() + ")\n");
+
+			// TODO: purge players not in guild anymore
+			//await PurgePlayersCmd(guildname);
+
+		}
+
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="level"></param>
+		/// <param name="guildname"></param>
+		/// <param name="insertedplayers"></param>
+		/// <param name="updatedplayers"></param>
+		/// <param name="failedplayers"></param>
+		/// <returns></returns>
+		private EmbedBuilder BuildUGCOutput(string level, string guildname, List<string> insertedplayers, List<string> updatedplayers, List<string> failedplayers)
+		{
 			EmbedBuilder embugc = Utility.GetBuilder(withname: "UpdateGuildCache", withtitle: "Updates the guild and player cache with the specified level players.",
 				withdescription: "```\n" + "The following players have been added/updated in the " + guildname + " cache." + "```", withiconurl: Context.Guild.IconUrl);
 
@@ -281,14 +371,27 @@ namespace RipBot.Modules
 				x.Value = tmpfailedplayers;
 			});
 
+			//string tmppurgedplayers = "";
+			//foreach (string purgededplayer in purgedplayers)
+			//{
+			//	tmppurgedplayers += tmppurgedplayers + " -- ";
+			//}
+
+			//// remove the trailing " -- " if it exist
+			//if (!string.IsNullOrEmpty(tmppurgedplayers))
+			//	tmppurgedplayers = tmppurgedplayers.Substring(0, tmppurgedplayers.Length - 4);
+			//else
+			//	tmppurgedplayers = "NONE";
+
+			//embugc.AddField(x =>
+			//{
+			//	x.IsInline = false;
+			//	x.Name = "__**Slated for removal " + insertedplayers.Count.ToString() + " Players**__";
+			//	x.Value = tmppurgedplayers;
+			//});
 
 			embugc.Build();
-
-			#endregion
-
-			//await ReplyAsync(sb.ToString() + "\n");
-			await ReplyAsync("\n", embed: embugc);
-			await ReplyAsync("FINISHED adding/updating " + numofupdatedplayers.ToString() + " level " + level + " players out of " + numofplayers.ToString() + "  (" + DateTime.Now.ToString() + ")\n");
+			return embugc;
 		}
 
 
