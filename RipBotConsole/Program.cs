@@ -116,6 +116,10 @@ namespace RipBot
 				Console.Write("Bot Prefix: ");
 				config.Prefix = Console.ReadLine();              // Read the bot prefix from console.
 
+				Console.Write("Log bot commands (true or false): ");
+				string tmp = Console.ReadLine();
+				config.LogCommands = bool.Parse(tmp);              // Use command logging?.
+
 				config.Save();                                  // Save the new configuration object to file.
 			}
 			Console.WriteLine("Bot configuration Loaded...");

@@ -1105,6 +1105,29 @@ namespace RipBot
 
 
 
+		/// <summary>
+		/// Logs a command sent to the bot.
+		/// </summary>
+		/// <param name="guildname"></param>
+		/// <param name="channelname"></param>
+		/// <param name="author"></param>
+		/// <param name="content"></param>
+		/// <param name="timestamp"></param>
+		public void LogCommand(string guildname, string channelname, string author, string content, string timestamp)
+		{
+			if (!_isdbopen)
+				this.Open();
+
+			try
+			{
+				SQLiteCommand cmd = null;
+				cmd = new SQLiteCommand("INSERT INTO COMMANDLOG (GuildName, ChannelName, Author, Content, Timestamp) VALUES ('" + guildname + "', '" + channelname + "', '" + author + "', '" + content + "', '" + timestamp + "')", _cnn);
+				cmd.ExecuteNonQuery();
+			}
+			catch
+			{ }
+		}
+
 
 
 

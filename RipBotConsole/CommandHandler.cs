@@ -13,6 +13,8 @@ namespace RipBot
 		private DiscordSocketClient _client;
 		private CommandService _cmds;
 		private MOTDTimerService _timer;
+		private DataAccess _da;
+		private bool _logcommands = false;
 
 
 		/// <summary>
@@ -22,6 +24,9 @@ namespace RipBot
 		/// <returns></returns>
 		public async Task Install(DiscordSocketClient c)
 		{
+			_logcommands = BotConfiguration.Load().LogCommands;
+			_da = new DataAccess();
+
 			_client = c;                                                 // Save an instance of the discord client.
 			_cmds = new CommandService();                                // Create a new instance of the commandservice.
 
@@ -64,6 +69,9 @@ namespace RipBot
 			map.Add(_timer);									// Add our services to the dependency map
 
 			var context = new SocketCommandContext(_client, msg);     // Create a new command context.
+
+			if(_logcommands)	// only if logging is enabled in config
+				_da.LogCommand(context.Guild.Name, msg.Channel.Name, msg.Author.Username, msg.Content, msg.Timestamp.ToLocalTime().ToString());
 
 			int argPos = 0;                                     // Check if the message has either a string or mention prefix.
 			if (msg.HasStringPrefix(BotConfiguration.Load().Prefix, ref argPos) ||

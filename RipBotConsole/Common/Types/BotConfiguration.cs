@@ -20,6 +20,8 @@ namespace RipBot.Types
 		public ulong[] Owners { get; set; }
 		/// <summary> Your bot's login token. </summary>
 		public string Token { get; set; }
+		/// <summary> Log commands and responses. </summary>
+		public bool LogCommands { get; set; }
 
 
 		/// <summary>
@@ -30,6 +32,7 @@ namespace RipBot.Types
 			Prefix = "ripbot ";
 			Owners = new ulong[] { 0 };
 			Token = "";
+			LogCommands = true;
 		}
 
 		/// <summary> Save the configuration to the specified file location. </summary>
