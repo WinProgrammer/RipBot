@@ -53,7 +53,8 @@ namespace RipBot.Modules
 			//SocketChannel channel = Context.Client.GetChannel(ul);
 			//SocketTextChannel chnGeneral = channel as SocketTextChannel;
 
-			SocketTextChannel chnGeneral = (SocketTextChannel) Context.Client.GetChannel(Context.Guild.DefaultChannelId);
+			//SocketTextChannel chnGeneral = (SocketTextChannel) Context.Client.GetChannel(Context.Guild.DefaultChannel.Id);
+			SocketTextChannel chnGeneral = Context.Guild.DefaultChannel;
 
 			// send the motd to the general guild channel
 			await chnGeneral?.SendMessageAsync("\n**MOTD:**\n\n" + Globals.CURRENTMOTDMESSAGE + "\n");

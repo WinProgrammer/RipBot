@@ -53,7 +53,7 @@ namespace RipBot
 			_client.Log += Logger;
 
 			await _client.LoginAsync(TokenType.Bot, BotConfiguration.Load().Token);
-			await _client.ConnectAsync();
+			await _client.StartAsync();
 
 			_commands = new CommandHandler();               // Initialize the command handler service
 			await _commands.Install(_client);
