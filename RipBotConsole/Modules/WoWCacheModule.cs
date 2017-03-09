@@ -111,7 +111,6 @@ namespace RipBot.Modules
 					sb.AppendLine("Guild" + guildname + " not found.");
 					await ReplyAsync(sb.ToString());
 
-					//txtResults.Text = "Guild" + txtGuild.Text + " not found";
 					return;
 				}
 
@@ -163,12 +162,10 @@ namespace RipBot.Modules
 						switch (result)
 						{
 							case DataAccess.UpsertResult.INSERTED:
-								//sb.AppendLine(player.Name + " was added to cache.");
 								insertedplayers.Add(player.Name);
 								break;
 
 							case DataAccess.UpsertResult.UPDATED:
-								//sb.AppendLine(player.Name + " was updated in the cache.");
 								updatedplayers.Add(player.Name);
 								break;
 
@@ -195,7 +192,6 @@ namespace RipBot.Modules
 						Console.WriteLine("");
 						sb.AppendLine("Player " + dr["PlayerName"].ToString() + " not updated.");
 						failedplayers.Add(player.Name);
-						continue;
 					}
 
 					//Thread.Sleep(2000);
@@ -204,9 +200,6 @@ namespace RipBot.Modules
 			else
 			{
 				sb.AppendLine("There aren't any level " + level.ToString() + " players in the guild.  (" + DateTime.Now.ToString() + ")\n");
-				//insertedplayers.Add("NONE");
-				//updatedplayers.Add("NONE");
-				//failedplayers.Add("NONE");
 			}
 
 			matchingplayersfromcache = null;
@@ -219,6 +212,11 @@ namespace RipBot.Modules
 			// get players from wow
 			List<string> playersfromwow = new List<string>();
 			Guild theguild = explorer.GetGuild(Globals.DEFAULTREALM, guildname, GuildOptions.GetMembers);
+			if (theguild == null)
+			{
+				await ReplyAsync(guildname + " not found.");
+				return;
+			}
 			foreach (GuildMember gm in theguild.Members)
 			{
 				playersfromwow.Add(gm.Character.Name);
@@ -252,17 +250,37 @@ namespace RipBot.Modules
 			// add the players to the cache that are missing
 			foreach (string playertoadd in playerstoinsert)
 			{
-				player = explorer.GetCharacter(Globals.DEFAULTREALM, playertoadd, CharacterOptions.GetEverything);
+				try
+				{
+					player = explorer.GetCharacter(Globals.DEFAULTREALM, playertoadd, CharacterOptions.GetEverything);
+				}
+				catch (Exception ex)
+				{
+
+					if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud and Nighteld
+					{
+						sb.AppendLine(playertoadd + ": Error deserializing WoW character.");
+						continue;
+					}
+
+					if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
+					{
+						sb.AppendLine(playertoadd + ": Error Blizzard API service is down.");
+						continue;
+					}
+
+					sb.AppendLine(playertoadd + ": not found.");
+					continue;
+				}
+
 				result = da.UpdatePlayer(player);
 				switch (result)
 				{
 					case DataAccess.UpsertResult.INSERTED:
-						//sb.AppendLine(player.Name + " was added to cache.");
 						insertedplayers.Add(player.Name);
 						break;
 
 					case DataAccess.UpsertResult.UPDATED:
-						//sb.AppendLine(player.Name + " was updated in the cache.");
 						updatedplayers.Add(player.Name);
 						break;
 
@@ -281,13 +299,15 @@ namespace RipBot.Modules
 			da = null;
 			explorer = null;
 
+			if(sb != null && !string.IsNullOrEmpty(sb.ToString()))
+				await ReplyAsync(sb.ToString());
+
 			// build the output
 			EmbedBuilder embugc = BuildUGCOutput(level, guildname, insertedplayers, updatedplayers, failedplayers);
 
 
-			//await ReplyAsync(sb.ToString() + "\n");
 			await ReplyAsync("\n", embed: embugc);
-			await ReplyAsync("FINISHED adding/updating " + numofupdatedplayers.ToString() + " level " + level + " players out of " + numofplayers.ToString() + "  (" + DateTime.Now.ToString() + ")\n");
+			await ReplyAsync("FINISHED adding/updating level " + level + " players." + "  (" + DateTime.Now.ToString() + ")\n");
 
 			// TODO: purge players not in guild anymore
 			//await PurgePlayersCmd(guildname);
