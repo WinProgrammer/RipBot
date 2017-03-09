@@ -4,6 +4,7 @@ using RipBot.Types;
 using System.Reflection;
 using System.Threading.Tasks;
 using RipBot.Services;
+using System;
 
 namespace RipBot
 {
@@ -70,13 +71,23 @@ namespace RipBot
 
 			var context = new SocketCommandContext(_client, msg);     // Create a new command context.
 
-			if(_logcommands)	// only if logging is enabled in config
-				_da.LogCommand(context.Guild.Name, msg.Channel.Name, msg.Author.Username, msg.Content, msg.Timestamp.ToLocalTime().ToString());
-
 			int argPos = 0;                                     // Check if the message has either a string or mention prefix.
 			if (msg.HasStringPrefix(BotConfiguration.Load().Prefix, ref argPos) ||
 				msg.HasMentionPrefix(_client.CurrentUser, ref argPos))
-			{                                                   // Try and execute a command with the given context.
+			{
+				if (_logcommands)    // only if logging is enabled in config and it's a bot message
+				{
+					try
+					{
+						_da.LogCommand(context.Guild.Name, msg.Channel.Name, msg.Author.Username, msg.Content, msg.Timestamp.ToLocalTime().ToString());
+					}
+					catch (Exception ex)
+					{
+						Console.WriteLine(ex.ToString());
+					}
+				}
+
+				// Try and execute a command with the given context.
 				var result = await _cmds.ExecuteAsync(context, argPos, map);
 
 				if (!result.IsSuccess)                          // If execution failed, reply with the error message.
