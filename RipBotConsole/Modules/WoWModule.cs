@@ -253,7 +253,7 @@ namespace RipBot.Modules
 			string specrole = da.GetFieldValue("SELECT SpecRole FROM PLAYERS WHERE PlayerName = '" + player.Name + "'");
 
 
-			sb.AppendLine(playername + " is a level " + player.Level + " " + Utility.ToTitleCase(player.Race.ToString()) + " " + specname + " " + Utility.ToTitleCase(player.Class.ToString()) + "  (" + specrole + ")");
+			sb.AppendLine(playername + " is a level " + player.Level + " " + Utility.ToTitleCase(player.Race.ToString()) + " " + specname + " " + Utility.ToTitleCase(player.Class.ToString()) + "  (" + specrole + ") who plays for " + player.Guild.Name);
 
 			#region build output
 
