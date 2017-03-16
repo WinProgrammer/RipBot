@@ -25,7 +25,7 @@
 		/// <summary>
 		/// 
 		/// </summary>
-		Corporate = 4,
+		GuildAssist = 4,
 		/// <summary>
 		/// 
 		/// </summary>
