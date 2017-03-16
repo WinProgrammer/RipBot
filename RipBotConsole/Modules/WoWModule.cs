@@ -140,7 +140,7 @@ namespace RipBot.Modules
 			embedofficers.AddField(x =>
 			{
 				x.IsInline = true;
-				x.Name = "__**Corporate**__";
+				x.Name = "__**Guild Assist**__";
 				x.Value = working;
 			});
 
