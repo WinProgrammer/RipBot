@@ -170,6 +170,119 @@ namespace RipBot.Modules
 		}
 
 
+		/// <summary>
+		/// Gets a player from WoW.
+		/// </summary>
+		/// <param name="playername">The name of the player to get.</param>
+		/// <returns>The player.</returns>
+		private Character GetPlayerFromWow(string playername)
+		{
+			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
+			Character player = null;
+
+			try
+			{
+				player = explorer.GetCharacter(Globals.DEFAULTREALM, playername, CharacterOptions.GetEverything);
+			}
+			catch (Exception ex)
+			{
+				if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
+				{
+					//sb.AppendLine("Blizzard API service is down.");
+					//sb.AppendLine(ex.Message + "\n");
+				}
+				if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud
+				{
+					//sb.AppendLine("Player " + playername + " Error deserializing object.");
+				}
+
+				//sb.AppendLine("Player " + playername + " not found.");
+				//await ReplyAsync(sb.ToString());
+				//return;
+			}
+
+			explorer = null;
+
+			return player;
+		}
+
+
+		private Guild GetGuildFromWow(string guildname)
+		{
+			Guild theguild = null;
+			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
+
+			try
+			{
+				theguild = explorer.GetGuild(Globals.DEFAULTREALM, guildname, GuildOptions.GetEverything);
+
+				UpdateGuildInfo(theguild);
+			}
+			catch (Exception eex)
+			{
+				//sb.AppendLine(eex.Message);
+
+				if (eex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
+				{
+					//sb.AppendLine("Blizzard API service is down.");
+					//sb.AppendLine(eex.Message + "\n");
+				}
+				//txtResults.Text = "Guild" + txtGuild.Text + " not found";
+				//await ReplyAsync(sb.ToString());
+
+				//return;
+			}
+
+			explorer = null;
+
+			return theguild;
+		}
+
+
+		/// <summary>
+		/// Updates the guild cache and guildmembers (PLAYERS table) only if the lastmodified dates are different.
+		/// </summary>
+		/// <param name="theguild">The guild to update.</param>
+		private void UpdateGuildInfo(Guild theguild)
+		{
+			int ret = -1;
+			int updates, inserts = 0;
+
+			DataAccess da = new DataAccess();
+
+			// get the guilds lastmodified readable date from database
+			DateTime dt = da.GetGuildLastModifiedReadableDate(theguild.Name);
+
+			// compare to lastmodified date from wow api query
+			DateTime dtfromwow = Utility.ConvertUnixToLocalTime(theguild.LastModified);
+
+			// if they are different then update the database
+			if (dtfromwow > dt)
+			{
+				// upsert the GUILDS table
+				ret = da.UpdateGuildInfo(theguild);
+
+				// if successful, then upsert the PLAYERS table with info from the guilds members
+				if (ret != -1)
+				{
+					//txtResults.Text += "GUILDS table updated\r\n";
+					ret = da.UpdateGuildMembers(theguild, out inserts, out updates);
+
+					if (ret != -1)
+					{
+						//txtResults.Text += "GUILDMEMBERS table updated with " + ret.ToString() + " players.\r\n";
+						//txtResults.Text += "GUILDMEMBERS table had " + inserts.ToString() + " inserts.\r\n";
+						//txtResults.Text += "GUILDMEMBERS table had " + updates.ToString() + " updates.\r\n";
+					}
+				}
+			}
+
+			//txtResults.Text += "Finished updating guild info.\r\n";
+
+			da.Dispose();
+			da = null;
+		}
+
 
 
 		/// <summary>
@@ -189,29 +302,16 @@ namespace RipBot.Modules
 
 			StringBuilder sb = new StringBuilder();
 			bool ret = false;
-			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
-			Character player = null;
 
-			try
-			{
-				player = explorer.GetCharacter(Globals.DEFAULTREALM, playername, CharacterOptions.GetEverything);
-			}
-			catch (Exception ex)
-			{
-				if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
-				{
-					//sb.AppendLine("Blizzard API service is down.");
-					sb.AppendLine(ex.Message + "\n");
-				}
-				if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud
-				{
-					sb.AppendLine("Player " + playername + " Error deserializing object.");
-				}
+			Character player = GetPlayerFromWow(playername);
 
+			if (player == null)
+			{
 				sb.AppendLine("Player " + playername + " not found.");
 				await ReplyAsync(sb.ToString());
 				return;
 			}
+
 
 			DataAccess da = new DataAccess();
 			// check if guild exists
@@ -219,27 +319,10 @@ namespace RipBot.Modules
 			// if it doesn't, get it
 			if (!ret)
 			{
-				Guild theguild = null;
-
-				try
+				Guild theguild = GetGuildFromWow(player.Guild.Name);
+				if (theguild == null)
 				{
-					theguild = explorer.GetGuild(Globals.DEFAULTREALM, player.Guild.Name, GuildOptions.GetEverything);
-
-					UpdateGuildInfo(theguild);
-				}
-				catch (Exception eex)
-				{
-					sb.AppendLine(eex.Message);
-
-					if (eex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
-					{
-						//sb.AppendLine("Blizzard API service is down.");
-						sb.AppendLine(eex.Message + "\n");
-					}
-					//txtResults.Text = "Guild" + txtGuild.Text + " not found";
-					await ReplyAsync(sb.ToString());
-
-					return;
+					//
 				}
 
 				theguild = null;
@@ -346,55 +429,8 @@ namespace RipBot.Modules
 
 
 			player = null;
-			explorer = null;
-
 
 			await ReplyAsync(sb.ToString());
-		}
-
-
-		/// <summary>
-		/// Updates the guild cache and guildmembers (PLAYERS table) only if the lastmodified dates are different.
-		/// </summary>
-		/// <param name="theguild">The guild to update.</param>
-		public static void UpdateGuildInfo(Guild theguild)
-		{
-			int ret = -1;
-			int updates, inserts = 0;
-
-			DataAccess da = new DataAccess();
-
-			// get the guilds lastmodified readable date from database
-			DateTime dt = da.GetGuildLastModifiedReadableDate(theguild.Name);
-
-			// compare to lastmodified date from wow api query
-			DateTime dtfromwow = Utility.ConvertUnixToLocalTime(theguild.LastModified);
-
-			// if they are different then update the database
-			if (dtfromwow > dt)
-			{
-				// upsert the GUILDS table
-				ret = da.UpdateGuildInfo(theguild);
-
-				// if successful, then upsert the PLAYERS table with info from the guilds members
-				if (ret != -1)
-				{
-					//txtResults.Text += "GUILDS table updated\r\n";
-					ret = da.UpdateGuildMembers(theguild, out inserts, out updates);
-
-					if (ret != -1)
-					{
-						//txtResults.Text += "GUILDMEMBERS table updated with " + ret.ToString() + " players.\r\n";
-						//txtResults.Text += "GUILDMEMBERS table had " + inserts.ToString() + " inserts.\r\n";
-						//txtResults.Text += "GUILDMEMBERS table had " + updates.ToString() + " updates.\r\n";
-					}
-				}
-			}
-
-			//txtResults.Text += "Finished updating guild info.\r\n";
-
-			da.Dispose();
-			da = null;
 		}
 
 
@@ -507,8 +543,6 @@ namespace RipBot.Modules
 		public async Task CompareGearCmd(params string[] playernames)
 		{
 			StringBuilder sb = new StringBuilder();
-			WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
-
 
 			Hashtable[] players = new Hashtable[playernames.Length];
 			string ilvlsforembed = "";
@@ -518,42 +552,26 @@ namespace RipBot.Modules
 
 			for (int i = 0; i < playernames.Length; i++)
 			{
-				Character currentplayer = null;
+				Character currentplayer = GetPlayerFromWow(playernames[i]);
 
-				try
+				if (currentplayer == null)
 				{
-					currentplayer = explorer.GetCharacter(Globals.DEFAULTREALM, playernames[i], CharacterOptions.GetEverything);
-					ilvlsforembed += playernames[i] + " " + currentplayer.Items.AverageItemLevel + "/" + currentplayer.Items.AverageItemLevelEquipped + " -- ";
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine(ex.ToString());
-					sb.AppendLine(ex.Message);
-
-					if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
-					{
-						sb.AppendLine(ex.Message + "\n");
-					}
-
-					if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud
-					{
-						sb.AppendLine("Player " + playernames[i] + " Error deserializing object.");
-					}
-
 					sb.AppendLine("Player " + playernames[i] + " not found.");
 					await ReplyAsync(sb.ToString());
 					return;
 				}
 
+				ilvlsforembed += playernames[i] + " " + currentplayer.Items.AverageItemLevel + "/" + currentplayer.Items.AverageItemLevelEquipped + " -- ";
+
 				players[i] = ParsePlayerGearForCompare(currentplayer);
 
 
 
-				// see if the player exists
+				// see if the player exists in cache
 				ret = da.DoesPlayersExist(playernames[i]);
 				if (!ret)
 				{
-					// if they dont, then get them and update cache
+					// if they dont, then add them to cache
 					try
 					{
 						da.UpdatePlayer(currentplayer);
@@ -561,15 +579,6 @@ namespace RipBot.Modules
 					catch (Exception ex)
 					{
 						Console.WriteLine(ex.ToString());
-						if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
-						{
-							sb.AppendLine(ex.Message + "\n");
-						}
-
-						if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud
-						{
-							sb.AppendLine("Player " + playernames[i] + " Error deserializing object.");
-						}
 
 						sb.AppendLine("Player " + playernames[i] + " not found or could not be updated.");
 						await ReplyAsync(sb.ToString());
@@ -625,7 +634,6 @@ namespace RipBot.Modules
 			#endregion
 
 
-			explorer = null;
 
 			sb.AppendLine();
 			sb.AppendLine();
@@ -762,6 +770,121 @@ namespace RipBot.Modules
 		}
 
 
+		/// <summary>
+		/// Get all the wow stats for specified user. (Updates guild cache and always refreshes the player in the database.)
+		/// </summary>
+		/// <param name="playername">The name of the player to get the stats for.</param>
+		/// <returns></returns>
+		[Command("getallstats"), Alias("gas")]
+		[Remarks("Get all the wow stats for specified user.\n(Always refreshes the player in the database.)\n")]
+		[Summary("EX: ripbot getallstats Ripgut\n")]
+		[MinPermissions(AccessLevel.User)]
+		public async Task GetAllStatsCmd(string playername)
+		{
+			//string realm = optionalrealmname != null ? optionalrealmname : Utility.DEFAULTREALM;
+
+			StringBuilder sb = new StringBuilder();
+
+			Character player = GetPlayerFromWow(playername);
+			if (player == null)
+			{
+				sb.AppendLine("Player " + playername + " not found.");
+				await ReplyAsync(sb.ToString());
+				return;
+			}
+
+
+
+			DataAccess da = new DataAccess();
+			// check if guild exists
+			bool ret = false;
+			ret = da.DoesGuildExist(player.Guild.Name);
+
+			// if it doesn't and the player is in a guild, get it
+			if (!ret && player.Guild != null)
+			{
+				Guild theguild = GetGuildFromWow(player.Guild.Name);
+				if (theguild == null)
+				{
+					//
+				}
+				theguild = null;
+			}
+
+			// upsert the player
+			DataAccess.UpsertResult result = da.UpdatePlayer(player);
+			DateTime cachedate = da.GetPlayerCachedDateUnixReadableDate(player.Name);
+			da.Dispose();
+			da = null;
+
+
+			sb.AppendLine(String.Format("{0} is a level {1} {2} who has {3} achievement points having completed {4} achievements as of {5}",
+				player.Name,
+				player.Level,
+				Utility.ToTitleCase(player.Class.ToString()),
+				player.AchievementPoints,
+				player.Achievements.AchievementsCompleted.Count(),
+				cachedate.ToString()
+				));
+
+			sb.AppendLine();
+			sb.AppendLine();
+
+			foreach (KeyValuePair<string, object> stat in player.Stats)
+			{
+				sb.AppendLine(stat.Key + " : " + stat.Value);
+			}
+
+			player = null;
+
+
+			await ReplyAsync(sb.ToString());
+		}
+
+
+
+		/// <summary>
+		/// Gets basic information about a guild. (Updates guild cache also)
+		/// </summary>
+		/// <param name="optionalguildname">The optional guild name to get the info on.</param>
+		/// <returns></returns>
+		[Command("guildinfo"), Alias("ggi")]
+		[Remarks("Gets basic information about a guild.\n")]
+		[Summary("EX: ripbot getguildinfo\nEX: ripbot getguildinfo Hordecorp\n")]
+		[MinPermissions(AccessLevel.User)]
+		public async Task GetGuildInfoCmd([Remainder]string optionalguildname = null)
+		{
+			string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
+			//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
+
+			//string realm = optionalrealmname != "" ? optionalrealmname : Utility.DEFAULTREALM;
+
+			Guild theguild = GetGuildFromWow(guildname);
+			if (theguild == null)
+			{
+				await ReplyAsync(guildname + " guild not found.");
+				return;
+			}
+
+			StringBuilder sb = new StringBuilder();
+			sb.AppendLine(String.Format("{0} is a level {1} {5} guild who plays on {4} with {2} members and {3} achievement points.",
+				theguild.Name,
+				theguild.Level.ToString(),
+				theguild.Members.Count().ToString(),
+				theguild.AchievementPoints.ToString(),
+				theguild.Realm,
+				theguild.Side.ToString()
+				));
+
+			theguild = null;
+
+			await ReplyAsync(sb.ToString());
+		}
+
+
+
+
+
 
 
 		/// <summary>
@@ -770,186 +893,6 @@ namespace RipBot.Modules
 		[Group("get"), Name("WoW")]
 		public class Get : ModuleBase<SocketCommandContext>
 		{
-			/// <summary>
-			/// Gets basic information about a guild. (Updates guild cache also)
-			/// </summary>
-			/// <param name="optionalguildname">The optional guild name to get the info on.</param>
-			/// <returns></returns>
-			[Command("guildinfo"), Alias("ggi")]
-			[Remarks("Gets basic information about a guild.\n")]
-			[Summary("EX: ripbot get guildinfo\nEX: ripbot get guildinfo Hordecorp\n")]
-			[MinPermissions(AccessLevel.User)]
-			public async Task GuildInfoCmd([Remainder]string optionalguildname = null)
-			{
-				string guildname = optionalguildname ?? Globals.DEFAULTGUILDNAME;
-				//string realm = optionalrealmname ?? Utility.DEFAULTREALM;
-
-				//string realm = optionalrealmname != "" ? optionalrealmname : Utility.DEFAULTREALM;
-
-				WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
-				StringBuilder sb = new StringBuilder();
-
-				Guild theguild = null;
-				try
-				{
-					theguild = explorer.GetGuild(Globals.DEFAULTREALM, guildname, GuildOptions.GetEverything);
-				}
-				catch (Exception ex)
-				{
-					Console.WriteLine(ex.Message);
-					if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
-					{
-						//await ReplyAsync("Blizzard API service is down.\n");
-						await ReplyAsync(ex.Message + "\n");
-					}
-					await ReplyAsync(guildname + " guild not found.");
-					return;
-				}
-
-
-				sb.AppendLine(String.Format("{0} is a level {1} {5} guild who plays on {4} with {2} members and {3} achievement points.",
-					theguild.Name,
-					theguild.Level.ToString(),
-					theguild.Members.Count().ToString(),
-					theguild.AchievementPoints.ToString(),
-					theguild.Realm,
-					theguild.Side.ToString()
-					));
-
-				//DataAccess da = new DataAccess();
-				//da.UpdateGuildInfo(theguild);
-				//int inserts = 0;
-				//int updates = 0;
-				//da.UpdateGuildMembers(theguild, out inserts, out updates);
-				UpdateGuildInfo(theguild);
-				//da.Dispose();
-				//da = null;
-
-				theguild = null;
-				explorer = null;
-
-				//txtResults.Text += sb.ToString() + "\r\n\r\n";
-
-				await ReplyAsync(sb.ToString());
-			}
-
-
-
-
-			/// <summary>
-			/// Get all the wow stats for specified user. (Updates guild cache and always refreshes the player in the database.)
-			/// </summary>
-			/// <param name="playername">The name of the player to get the stats for.</param>
-			/// <returns></returns>
-			[Command("allstats"), Alias("gas")]
-			[Remarks("Get all the wow stats for specified user.\n(Always refreshes the player in the database.)\n")]
-			[Summary("EX: ripbot get allstats Ripgut\n")]
-			[MinPermissions(AccessLevel.User)]
-			public async Task AllStatsCmd(string playername)
-			{
-				//string realm = optionalrealmname != null ? optionalrealmname : Utility.DEFAULTREALM;
-
-				WowExplorer explorer = new WowExplorer(Region.US, Locale.en_US, Globals.MASHERYAPIKEY);
-				StringBuilder sb = new StringBuilder();
-
-				Character player = null;
-				try
-				{
-					//player = explorer.GetCharacter(realm, playername, CharacterOptions.GetStats | CharacterOptions.GetAchievements);
-					player = explorer.GetCharacter(Globals.DEFAULTREALM, playername, CharacterOptions.GetEverything);
-				}
-				catch (Exception ex)
-				{
-					sb.AppendLine(ex.Message);
-
-					if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
-					{
-						//sb.AppendLine("Blizzard API service is down.");
-						sb.AppendLine(ex.Message + "\n");
-					}
-
-					if (ex.HResult == -2146233076)  // seems to happen on Wrobbinhuud
-					{
-						sb.AppendLine("Player " + playername + " Error deserializing object.");
-					}
-
-					sb.AppendLine("Player " + playername + " not found.");
-					explorer = null;
-					await ReplyAsync(sb.ToString());
-					return;
-				}
-
-
-
-
-
-				DataAccess da = new DataAccess();
-				// check if guild exists
-				bool ret = false;
-				ret = da.DoesGuildExist(player.Guild.Name);
-
-				// if it doesn't and the player is in a guild, get it
-				if (!ret && player.Guild != null)
-				{
-					Guild theguild = null;
-
-					try
-					{
-						theguild = explorer.GetGuild(Globals.DEFAULTREALM, player.Guild.Name, GuildOptions.GetEverything);
-
-						UpdateGuildInfo(theguild);
-					}
-					catch (Exception ex)
-					{
-						sb.AppendLine(ex.Message);
-
-						if (ex.HResult == -2146233079)  // "The remote server returned an error: (503) Server Unavailable."
-						{
-							//sb.AppendLine("Blizzard API service is down.");
-							sb.AppendLine(ex.Message + "\n");
-						}
-
-						//txtResults.Text = "Guild" + txtGuild.Text + " not found";
-						//return;
-					}
-
-					theguild = null;
-				}
-
-				// upsert the player
-				DataAccess.UpsertResult result = da.UpdatePlayer(player);
-				DateTime cachedate = da.GetPlayerCachedDateUnixReadableDate(player.Name);
-				da.Dispose();
-				da = null;
-
-
-
-
-
-				sb.AppendLine(String.Format("{0} is a level {1} {2} who has {3} achievement points having completed {4} achievements as of {5}",
-					player.Name,
-					player.Level,
-					Utility.ToTitleCase(player.Class.ToString()),
-					player.AchievementPoints,
-					player.Achievements.AchievementsCompleted.Count(),
-					cachedate.ToString()
-					));
-
-				sb.AppendLine();
-				sb.AppendLine();
-
-				foreach (KeyValuePair<string, object> stat in player.Stats)
-				{
-					sb.AppendLine(stat.Key + " : " + stat.Value);
-				}
-
-				explorer = null;
-				player = null;
-
-
-				await ReplyAsync(sb.ToString());
-			}
-
 
 
 			/// <summary>
@@ -1068,7 +1011,6 @@ namespace RipBot.Modules
 				DataTable players = da.GetRaidReadyPlayers(guildname, minimumaverageitemlevel, role);
 				da.Dispose();
 				da = null;
-
 
 
 				//bool test = chkShowCachedDate.Checked;
