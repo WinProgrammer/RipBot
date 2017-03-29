@@ -1032,7 +1032,7 @@ namespace RipBot.Modules
 							));
 
 						// can't send over 2k in a message
-						if (sb.Length > 1950)
+						if (sb.Length > 1900)
 						{
 							// send what we have and clear the stringbuilder
 							await ReplyAsync(sb.ToString());
@@ -1159,7 +1159,7 @@ namespace RipBot.Modules
 					sb.AppendLine("**" + dr["PlayerName"].ToString() + "**\t(" + playersrank + ") last seen " + dr["LastModifiedReadable"].ToString());
 
 					// can't send over 2k in a message
-					if (sb.Length > 1950)
+					if (sb.Length > 1900)
 					{
 						// send what we have and clear the stringbuilder
 						await ReplyAsync(sb.ToString());
