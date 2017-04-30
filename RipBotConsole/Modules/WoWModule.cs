@@ -561,7 +561,9 @@ namespace RipBot.Modules
 					return;
 				}
 
-				ilvlsforembed += playernames[i] + " " + currentplayer.Items.AverageItemLevel + "/" + currentplayer.Items.AverageItemLevelEquipped + " -- ";
+				string specrole = da.GetFieldValue("SELECT SpecRole FROM PLAYERS WHERE PlayerName = '" + playernames[i] + "'");
+
+				ilvlsforembed += playernames[i] + " " + currentplayer.Items.AverageItemLevel + "/" + currentplayer.Items.AverageItemLevelEquipped + " (" + specrole + ")" + " -- ";
 
 				players[i] = ParsePlayerGearForCompare(currentplayer);
 
