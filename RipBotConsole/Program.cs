@@ -1,8 +1,16 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
+using System.Configuration.Install;
+using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
+using System.ServiceProcess;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
+
 
 using Discord;
 using Discord.WebSocket;
@@ -13,17 +21,48 @@ using Discord.Commands;
 namespace RipBot
 {
 	/// <summary>
-	/// 
+	/// Entry point.
 	/// </summary>
 	public class Program
 	{
 		/// <summary>
-		/// Entry Point.
+		/// The name of the service.
 		/// </summary>
-		/// <param name="args"></param>
-		public static void Main(string[] args)
-			=> new Program().Start().GetAwaiter().GetResult();
+		public const string Name = "RipBot";
+		/// <summary>
+		/// The description of the service.
+		/// </summary>
+		public const string Description = "Discord RipBot service";
 
+		static void Main(string[] args)
+		{
+			BasicServiceStarter.Run<MyService>(Name, Description);
+		}
+	}
+
+
+	/// <summary>
+	/// The actual service to be run.
+	/// </summary>
+	class MyService : IService
+	{
+		private bool _stopped = true;
+
+		public async void Start()
+		{
+			await StartBot();
+		}
+
+		public void Dispose()
+		{
+			_stopped = true;
+			StopBot();
+			//System.Environment.Exit(-1);
+		}
+
+
+
+		#region Bot code
 
 		private DiscordSocketClient _client;
 		private CommandHandler _commands;
@@ -33,7 +72,7 @@ namespace RipBot
 		/// Starts the bot.
 		/// </summary>
 		/// <returns></returns>
-		public async Task Start()
+		public async Task StartBot()
 		{
 			EnsureBotConfigExists();                            // Ensure the configuration file has been created.
 			EnsureWoWConfigExists();
@@ -46,9 +85,9 @@ namespace RipBot
 				LogLevel = LogSeverity.Verbose                  // Specify console verbose information level.
 			});
 
-			//_client.Log += (l)                               // Register the console log event.
-			//	=> Task.Run(()
-			//	=> Console.WriteLine($"[{l.Severity}] {l.Source}: {l.Exception?.ToString() ?? l.Message}"));
+			_client.Log += (l)                               // Register the console log event.
+				=> Task.Run(()
+				=> Console.WriteLine($"[{l.Severity}] {l.Source}: {l.Exception?.ToString() ?? l.Message}"));
 
 			_client.Log += Logger;
 
@@ -58,12 +97,21 @@ namespace RipBot
 			_commands = new CommandHandler();               // Initialize the command handler service
 			await _commands.Install(_client);
 
-
-			await Task.Delay(-1);                            // Prevent the console window from closing.
+			_stopped = false;
+			while (!_stopped)
+			{ }
+			//await Task.Delay(-1);                            // Prevent the console window from closing.
 		}
 
-		
-		
+		public void StopBot()
+		{
+			_stopped = true;
+			//System.Environment.Exit(-1);
+			//Application.Exit;
+		}
+
+
+
 		// Create a named logging handler, so it can be re-used by addons that ask for a Func<LogMessage, Task>.
 		private static Task Logger(LogMessage lmsg)
 		{
@@ -172,13 +220,198 @@ namespace RipBot
 			{
 				var config = new MOTDConfiguration();               // Create a new configuration object.
 
-				config.Message = "Default MOTD message.";	// Set the default message.
-				config.IntervalInMinutes = "5";			// set the default timer to 5 minutes.
+				config.Message = "Default MOTD message.";   // Set the default message.
+				config.IntervalInMinutes = "5";         // set the default timer to 5 minutes.
 
 				config.Save();                                  // Save the new configuration object to file.
 			}
 			Console.WriteLine("MOTD configuration Loaded...");
 		}
 
+
+		#endregion
+
+
 	}
+
+
+
+	#region Service installer stuff
+
+	[RunInstaller(true)]
+	public class MyInstaller : Installer
+	{
+		public MyInstaller()
+		{
+			Installers.Add(new ServiceProcessInstaller
+			{
+				Account = ServiceAccount.LocalSystem
+			});
+			Installers.Add(new ServiceInstaller
+			{
+				ServiceName = Program.Name,
+				DisplayName = Program.Name,
+				Description = Program.Description
+			});
+		}
+	}
+
+	static class BasicServiceInstaller
+	{
+		public static void Install(string serviceName, string serviceDescription)
+		{
+			CreateInstaller(serviceName, serviceDescription).Install(new Hashtable());
+		}
+
+		public static void Uninstall(string serviceName, string serviceDescription)
+		{
+			CreateInstaller(serviceName, serviceDescription).Uninstall(null);
+		}
+
+		private static Installer CreateInstaller(string serviceName, string serviceDescription)
+		{
+			var installer = new TransactedInstaller();
+			installer.Installers.Add(new ServiceInstaller
+			{
+				ServiceName = serviceName,
+				DisplayName = serviceName,
+				Description = serviceDescription,
+				StartType = ServiceStartMode.Manual
+			});
+			installer.Installers.Add(new ServiceProcessInstaller
+			{
+				Account = ServiceAccount.LocalSystem
+			});
+			var installContext = new InstallContext(
+			serviceName + ".install.log", null);
+			installContext.Parameters["assemblypath"] = Assembly.GetEntryAssembly().Location;
+			installer.Context = installContext;
+			return installer;
+		}
+	}
+
+	#endregion
+
+
+	#region Service related stuff
+
+	public interface IService : IDisposable
+	{
+		void Start();
+	}
+
+	public class BasicService : ServiceBase
+	{
+		private readonly IService _service;
+
+		public BasicService(IService service, string name)
+		{
+			_service = service;
+			ServiceName = name;
+		}
+
+		protected override void OnStart(string[] args)
+		{
+			_service.Start();
+		}
+
+		protected override void OnStop()
+		{
+			_service.Dispose();
+		}
+	}
+
+	/// <summary>
+	/// Handles how to run the program. As a service or a console app.
+	/// </summary>
+	public static class BasicServiceStarter
+	{
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <typeparam name="T"></typeparam>
+		/// <param name="serviceName"></param>
+		/// <param name="serviceDescription"></param>
+		public static void Run<T>(string serviceName, string serviceDescription) where T : IService, new()
+		{
+			AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+			{
+				if (EventLog.SourceExists(serviceName))
+				{
+					EventLog.WriteEntry(serviceName,
+						"Fatal Exception : " + Environment.NewLine +
+						e.ExceptionObject, EventLogEntryType.Error);
+				}
+			};
+
+			if (Environment.UserInteractive)
+			{
+				var cmd =
+			(Environment.GetCommandLineArgs().Skip(1).FirstOrDefault() ?? "")
+			.ToLower();
+				switch (cmd)
+				{
+					case "i":
+					case "install":
+						Console.WriteLine("Installing {0}", serviceName);
+						BasicServiceInstaller.Install(serviceName, serviceDescription);
+						break;
+					case "u":
+					case "uninstall":
+						Console.WriteLine("Uninstalling {0}", serviceName);
+						BasicServiceInstaller.Uninstall(serviceName, serviceDescription);
+						break;
+					default:
+						using (var service = new T())
+						{
+							service.Start();
+							Console.WriteLine("Running {0}, press any key to stop", serviceName);
+							Console.ReadKey();
+						}
+						break;
+				}
+			}
+			else
+			{
+				ServiceBase.Run(new BasicService<T> { ServiceName = serviceName });
+			}
+		}
+	}
+
+	/// <summary>
+	/// 
+	/// </summary>
+	/// <typeparam name="T"></typeparam>
+	public class BasicService<T> : ServiceBase where T : IService, new()
+	{
+		private IService _service;
+
+		/// <summary>
+		/// 
+		/// </summary>
+		/// <param name="args"></param>
+		protected override void OnStart(string[] args)
+		{
+			try
+			{
+				_service = new T();
+				_service.Start();
+			}
+			catch
+			{
+				ExitCode = 1064;
+				throw;
+			}
+		}
+
+		/// <summary>
+		/// 
+		/// </summary>
+		protected override void OnStop()
+		{
+			_service.Dispose();
+		}
+	}
+
+	#endregion
 }
